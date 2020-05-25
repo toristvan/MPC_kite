@@ -4,7 +4,7 @@ import numpy as np
 
 T = 100 #Time horizon
 N = 200 #Number of control intervals
-
+DT = N/T
 #States
 theta = MX.sym("theta")
 phi = MX.sym("phi")
