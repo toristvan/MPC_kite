@@ -34,6 +34,10 @@ E = E0 - c*(u**2)
 va = v0*E*cos(theta)
 PD = rho*(v0**2)/2
 TF = PD*A*(cos(theta)**2)*(E + 1)*np.sqrt(E**2 + 1)*(cos(theta)*cos(beta) + sin(theta)*sin(beta)*sin(phi))
+#alternative
+T_F = PD*A*(cos(x[0])**2)*(E_fnc(u) + 1)*np.sqrt(E_fnc(u)**2 + 1)*(cos(x[0])*cos(beta) + sin(x[0])*sin(beta)*sin(x[1]))
+
+tension = Function('tension', [x,u], [T_F])
 
 #Equations of motion
 thetadot = (va/l)*(cos(psi) - tan(theta)/E)
@@ -54,7 +58,9 @@ wF = 1e-4
 wu = 0.5
 
 #cost_func = Function('cost', [TF, u_new, u],[-wF*TF + wu*(u_new - u)**2])
-L = -wF*TF + wu*(u_old - u)**2
+stage_cost = -wF*tension(x,u) + wu*(u_old - u)**2
+stage_cost_fnc = Function('stage_cost', [x, u, u_old], [stage_cost])
+
 
 
 F = Function('F', [x,u, u_old], [xdot, L])
