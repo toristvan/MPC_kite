@@ -2,51 +2,55 @@
 from casadi import *
 import numpy as np
 
-T = 100 #Time horizon
-N = 200 #Number of control intervals
-DT = N/T
-#States
-theta = MX.sym("theta")
-phi = MX.sym("phi")
-psi = MX.sym("psi")
 
-x = vertcat(theta, phi, psi)
+#States
+#theta = MX.sym("theta")
+#phi = MX.sym("phi")
+#psi = MX.sym("psi")
+#x = vertcat(theta, phi, psi)
 
 #Control input
-u = MX.sym("u")
-u_old = MX.sym("u_old")
+#u = MX.sym("u")
+#u_old = MX.sym("u_old")
+
+dt = 0.1
+nx = 3
+nu = 1
 
 #Parameters
 E0 = 5 # MX.sym("E0")
 vm = 10 # MX.sym("vm")
-vA = 0.5 # MX.sym("vA")
+vA = 1 #1 # MX.sym("vA")
 vf = 0.1 # MX.sym("vf")
 voff = np.pi # MX.sym("voff")
 c = 0.028 # MX.sym("c")
 beta = 0 # MX.sym("beta")
 rho = 1 # MX.sym("rho")
-l = 500 # MX.sym("l")
+L = 500 # MX.sym("l")
 A = 30 # MX.sym("A")
 
-#Equations
-v0 = vm + vA*sin(2*np.pi)
-E = E0 - c*(u**2)
-va = v0*E*cos(theta)
-PD = rho*(v0**2)/2
-TF = PD*A*(cos(theta)**2)*(E + 1)*np.sqrt(E**2 + 1)*(cos(theta)*cos(beta) + sin(theta)*sin(beta)*sin(phi))
-#alternative
-T_F = PD*A*(cos(x[0])**2)*(E_fnc(u) + 1)*np.sqrt(E_fnc(u)**2 + 1)*(cos(x[0])*cos(beta) + sin(x[0])*sin(beta)*sin(x[1]))
-
-tension = Function('tension', [x,u], [T_F])
-
 #Equations of motion
-thetadot = (va/l)*(cos(psi) - tan(theta)/E)
-phidot = -sin(psi)*va/(l*sin(theta))
-psidot = va*u/l + cos(theta)*phidot
 
+x = SX.sym("x", nx, 1)
+u = SX.sym("u", nu, 1)
+t = SX.sym("t")
 
-#xdot= vertcat((va/L)*(cos(psi) - tan(theta)/E), -sin(psi)*va/(L*sin(theta)), va*u/L + cos(theta)*phidot)
-xdot = vertcat(thetadot, phidot, psidot)
+#Equations
+v0 = vm + vA*sin(2*np.pi*vf*t + voff)
+v0_fcn = Function('v0_fcn', [t], [v0])
+E = E0 - c*(u**2)
+E_fcn = Function('E_fcn', [u], [E])
+va = v0_fcn(t)*E*cos(x[0])
+va_fcn = Function('va_fcn', [x, t], [va])
+PD = rho*(v0_fcn(t)**2)/2
+PD_fcn = Function('PD_fcn', [t], [PD])
+TF = PD_fcn(t)*A*(cos(x[0])**2)*(E_fcn(u) + 1)*np.sqrt(E_fcn(u)**2 + 1)*(cos(x[0])*cos(beta) + sin(x[0])*sin(beta)*sin(x[1]))
+tension = Function('tension', [x,u,t], [TF])
+#Equations of motion
+#thetadot = (va/l)*(cos(psi) - tan(theta)/E)
+#phidot = -sin(psi)*va/(l*sin(theta))
+#psidot = va*u/l + cos(theta)*phidot
+#xdot = vertcat(thetadot, phidot, psidot)
 
 #Constrains
 hmin = 100
