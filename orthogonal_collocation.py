@@ -106,5 +106,5 @@ def Lj(tau_col, tau, j):
 def LgrInter(tau_col, tau, xk):
     xk_i = 0
     for j in range(len(xk)):
-        xk_i += L(tau_col, tau, j)*xk[j, :]
+        xk_i += Lj(tau_col, tau, j)*xk[j, :]
     return xk_i
