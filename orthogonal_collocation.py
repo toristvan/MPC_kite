@@ -108,3 +108,20 @@ def LgrInter(tau_col, tau, xk):
     for j in range(len(xk)):
         xk_i += Lj(tau_col, tau, j)*xk[j, :]
     return xk_i
+
+
+# collocation degree
+K = 3
+# collocation points
+tau_col = collocation_points(K-1, 'radau')
+#tau_col = collocation_points(K-1, 'legendre')
+tau_col = [0]+tau_col
+
+# Orthogonal collocation coefficients
+tau = SX.sym("tau")
+A = np.zeros((K,K))
+for j in range(K):
+    dLj = gradient(L(tau_col, tau, j), tau)
+    dLj_fcn = Function('dLj_fcn', [tau], [dLj])
+    for k in range(K):
+        A[j][k] = dLj_fcn(tau_col[k])
