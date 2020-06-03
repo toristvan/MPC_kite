@@ -3,14 +3,12 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl 
 from casadi import *
 
-dt = 0.1
-nx = 3
-nu = 1
+
 
 #Parameters
 E0 = 5 # MX.sym("E0")
 vm = 10 # MX.sym("vm")
-vA = 1 #1 # MX.sym("vA")
+vA = 5 #1 # MX.sym("vA")
 vf = 0.1 # MX.sym("vf")
 voff = np.pi # MX.sym("voff")
 c = 0.028 # MX.sym("c")
@@ -19,7 +17,10 @@ rho = 1 # MX.sym("rho")
 L = 500 # MX.sym("l")
 A = 30 # MX.sym("A")
 
-#Equations of motion
+#States and control variables
+dt = 0.1
+nx = 3
+nu = 1
 
 x = SX.sym("x", nx, 1)
 u = SX.sym("u", nu, 1)
@@ -42,29 +43,25 @@ xdot = vertcat((va_fcn(x, t)/L)*(cos(x[2])-tan(x[0]/E_fcn(u))), -va_fcn(x, t)*si
 
 # System and numerical integration
 system = Function('sys', [x,u,t], [xdot])
-
 ode = {'x': x, 'ode': xdot, 'p': vertcat(u,t)}
-
 opts = {'tf': dt}
-
 ode_solver = integrator('F', 'idas', ode, opts)
 
-print(ode_solver)
+#print(ode_solver)
 
-# Simulation of system with and without time input
+## Simulation of system with and without time input
+# preparation
 N_sim = 1000
 x_init = np.array([np.pi/4, 0, 0]).reshape(nx, 1)
 x_0 = x_init
 x_0_t = x_0
 u_k = np.array([[0]])
 t_k = np.array(np.linspace(dt, N_sim*dt, N_sim))
-p_k = vertcat(u_k, t_k)
 
-#print(p_k)
 res_x_sundials = [x_0]
 res_x_sundials_t = [x_0]
 
-# Your code here!
+# simulation
 for k in range(N_sim):
     sol = ode_solver(x0 = x_0, p = vertcat(u_k, u_k))
     x_f = sol['xf']
@@ -90,7 +87,7 @@ lines_t = ax.plot(res_x_sundials_t.T)
 ax.legend(lines + lines_t, ['theta', 'phi', 'psi', 'theta_t', 'phi_t', 'psi_t'])
 ax.set_ylabel('states')
 ax.set_xlabel('time')
-#plt.show()
+plt.show()
 
 ## Lagrange polynomials
 
@@ -111,17 +108,17 @@ def LgrInter(tau_col, tau, xk):
 
 
 # collocation degree
-K = 3
+K = 2
 # collocation points
-tau_col = collocation_points(K-1, 'radau')
+tau_col = collocation_points(K, 'radau')
 #tau_col = collocation_points(K-1, 'legendre')
 tau_col = [0]+tau_col
 
 # Orthogonal collocation coefficients
 tau = SX.sym("tau")
-A = np.zeros((K,K))
-for j in range(K):
+A = np.zeros((K+1,K+1))
+for j in range(K+1):
     dLj = gradient(L(tau_col, tau, j), tau)
     dLj_fcn = Function('dLj_fcn', [tau], [dLj])
-    for k in range(K):
+    for k in range(K+1):
         A[j][k] = dLj_fcn(tau_col[k])
