@@ -4,12 +4,9 @@ import matplotlib as mpl
 from casadi import *
 from casadi.tools import *
 
-#Simulation parameters
-N_sim = 50
-N = 20
-dt = 0.2
 
-#System Parameters
+
+#Parameters
 E0 = 5 # MX.sym("E0")
 vm = 10 # MX.sym("vm")
 vA = 0.5 #1 # MX.sym("vA")
@@ -22,12 +19,14 @@ L = 500 # MX.sym("l")
 A = 30 # MX.sym("A")
 
 #States and control variables
+dt = 0.2
 nx = 3
 nu = 1
 
 x = SX.sym("x", nx, 1)
 u = SX.sym("u", nu, 1)
 u_old = SX.sym("u_old", nu, 1)
+
 t = SX.sym("t")
 
 #Equations
@@ -43,6 +42,7 @@ TF = PD_fcn(t)*A*(cos(x[0])**2)*(E_fcn(u) + 1)*np.sqrt(E_fcn(u)**2 + 1)*(cos(x[0
 tension = Function('tension', [x,u,t], [TF])
 
 xdot = vertcat((va_fcn(x, t)/L)*(cos(x[2]) - tan(x[0])/E_fcn(u)), -va_fcn(x, t)*sin(x[2])/(L*sin(x[0])), va_fcn(x,t)*u/L - cos(x[0])*(-va_fcn(x, t)*sin(x[2])/(L*sin(x[0]))))
+#xdot = vertcat((va_fcn(x)/L)*(cos(x[2])-tan(x[0])/E_fcn(u)), -va_fcn(x)*sin(x[2]/(L*sin(x[0]))), va_fcn(x)*u/L - cos(x[0])*xdot[1])
 
 # System and numerical integration
 system = Function('sys', [x,u,t], [xdot])
@@ -50,6 +50,46 @@ ode = {'x': x, 'ode': xdot, 'p': vertcat(u,t)}
 opts = {'tf': dt}
 ode_solver = integrator('F', 'idas', ode, opts)
 
+#print(ode_solver)
+
+## Simulation of system with and without time input
+# preparation
+N_sim = 500
+x_0 = np.array([np.pi/4, 0, 0]).reshape(nx, 1)
+x_0_t = x_0
+u_k = np.array([[0]])
+t_k = np.array(np.linspace(dt, N_sim*dt, N_sim))
+
+res_x_sundials = [x_0]
+res_x_sundials_t = [x_0]
+
+# simulation
+for k in range(N_sim):
+    sol = ode_solver(x0 = x_0, p = vertcat(u_k, u_k))
+    x_f = sol['xf']
+    res_x_sundials.append(x_f)
+    x_0 = x_f
+
+    #with time for wind oscillations
+    sol_t = ode_solver(x0 = x_0_t, p = vertcat(u_k, t_k[k]))
+    x_f_t = sol_t['xf']
+    res_x_sundials_t.append(x_f_t)
+    x_0_t = x_f_t
+
+res_x_sundials = np.concatenate(res_x_sundials, axis = 1)
+res_x_sundials_t = np.concatenate(res_x_sundials_t, axis = 1)
+
+#print(res_x_sundials)
+
+# Plot results
+fig, ax = plt.subplots(figsize=(10,6))
+lines = ax.plot(res_x_sundials.T)
+ax.legend(lines, ['theta', 'phi', 'psi'])
+lines_t = ax.plot(res_x_sundials_t.T)
+ax.legend(lines + lines_t, ['theta', 'phi', 'psi', 'theta_t', 'phi_t', 'psi_t'])
+ax.set_ylabel('states')
+ax.set_xlabel('time')
+#plt.show()
 
 ## Lagrange polynomials
 
@@ -85,6 +125,8 @@ for j in range(K+1):
     for k in range(K+1):
         A[j][k] = dLj_fcn(tau_col[k])
 
+#print(A)
+
 # Continuity coefficients
 #to determine final state in each finite element
 
@@ -95,9 +137,59 @@ for j in range(K+1):
     L_j_fcn = Function('L_j_fcn', [tau], [L_j])
     D[j] = L_j_fcn(1)
 
+#print(D)
 
+# Test integration with orthgonal collocation
+### NOT WORKING
+#Create optimization problem
+#Initialize empty list of constraints
+'''
 
-##  MPC loop
+g = []
+
+#states
+X = SX.sym("X", nx, K+1)
+x_init = SX.sym("x0", nx)
+u = SX.sym("u", nu)
+t = SX.sym("t")
+
+g.append(X[:,0] - x_init)
+
+for k in range(1, K+1):
+    gk = -dt*system(X[:,k], u, t)
+    for j in range(K+1):
+        gk += A[j][k]*X[:,j]
+        
+    g.append(gk)
+
+g = vertcat(*g)
+
+#print(g.shape)
+#print(X.reshape((-1,1)).shape)
+nlp = {'x': X.reshape((-1,1)), 'g': g, 'p': vertcat(x_init, u, t)}
+#opts = {'halt_on_ampl_error':'yes'}
+#option ipopt_options "halt_on_ampl_error=yes"
+solver = nlpsol('solver', 'ipopt', nlp)
+print(solver)
+
+#Solve ODE with orthogonal collocation
+
+x_0 = np.array([np.pi/4, np.pi/4, np.pi/4]).reshape(nx, 1)
+
+res_x_oc = [x_0]
+
+for i in range(N_sim):
+    res_oc = solver(lbg=0, ubg=0, p=vertcat(x_0, u_k, t_k[i]))
+    X_k = res_oc['x'].full().reshape(K+1,nx)
+    x_next = X_k.T@D
+    res_x_oc.append(x_next)
+    x_0 = x_next
+
+# Make an array from the list of arrays:
+res_x_oc = np.concatenate(res_x_oc,axis=1)
+'''
+
+#  MPC loop
 
 #cost
 wF = 1e-4
@@ -186,12 +278,35 @@ g = vertcat(*g)
 prob = {'f':J,'x':vertcat(opt_x),'g':g, 'p':vertcat(x_init, time)}
 mpc_solver = nlpsol('solver','ipopt',prob)
 
+# test solver
+'''
+x_0 = np.array([np.pi/4, 0, 0]).reshape(nx, 1)
+mpc_res = mpc_solver(p=vertcat(x_0, t_k[:N]), lbg=0, ubg=0, lbx = lb_opt_x, ubx = ub_opt_x)
+
+#get results
+opt_x_k = opt_x(mpc_res['x'])
+
+X_k = horzcat(*opt_x_k['x',:,0,:])
+U_k = horzcat(*opt_x_k['u',:])
+
+fig, ax = plt.subplots(2,1, figsize=(10,6))
+
+# plot the states
+ax[0].plot(X_k.T)
+ax[1].plot(U_k.T)
+
+# Set labels
+ax[0].set_ylabel('states')
+ax[1].set_ylabel('inputs')
+ax[1].set_xlabel('time')
+plt.show()
+
+'''
 
 # MPC Main loop
 
 #initialize
 x_0 = np.array([np.pi/4, 0, 0]).reshape(nx, 1)
-t_k = np.array(np.linspace(dt, N_sim*dt, N_sim))
 res_x_mpc = [x_0]
 res_u_mpc = []
 
