@@ -5,7 +5,7 @@ from casadi import *
 from casadi.tools import *
 
 #Simulation parameters
-N_sim = 50
+N_sim = 150
 N = 20
 dt = 0.2
 
@@ -18,8 +18,8 @@ voff = np.pi # MX.sym("voff")
 c = 0.028 # MX.sym("c")
 beta = 0 # MX.sym("beta")
 rho = 1 # MX.sym("rho")
-L = 500 # MX.sym("l")
-A = 30 # MX.sym("A")
+L = 300 # MX.sym("l")
+A = 160 # MX.sym("A")
 
 #States and control variables
 nx = 3
@@ -42,7 +42,9 @@ PD_fcn = Function('PD_fcn', [t], [PD])
 TF = PD_fcn(t)*A*(cos(x[0])**2)*(E_fcn(u) + 1)*np.sqrt(E_fcn(u)**2 + 1)*(cos(x[0])*cos(beta) + sin(x[0])*sin(beta)*sin(x[1]))
 tension = Function('tension', [x,u,t], [TF])
 
-xdot = vertcat((va_fcn(x, t)/L)*(cos(x[2]) - tan(x[0])/E_fcn(u)), -va_fcn(x, t)*sin(x[2])/(L*sin(x[0])), va_fcn(x,t)*u/L - cos(x[0])*(-va_fcn(x, t)*sin(x[2])/(L*sin(x[0]))))
+xdot = vertcat((va_fcn(x, t)/L)*(cos(x[2]) - tan(x[0])/E_fcn(u)), 
+-va_fcn(x, t)*sin(x[2])/(L*sin(x[0])), 
+va_fcn(x,t)*u/L - cos(x[0])*(-va_fcn(x, t)*sin(x[2])/(L*sin(x[0]))))
 
 # System and numerical integration
 system = Function('sys', [x,u,t], [xdot])
@@ -70,7 +72,7 @@ def LgrInter(tau_col, tau, xk):
 
 
 # collocation degree
-K = 2
+K = 3
 # collocation points
 tau_col = collocation_points(K, 'radau')
 #tau_col = collocation_points(K-1, 'legendre')
@@ -218,20 +220,26 @@ for i in range(N_sim):
     # Store the results
     res_x_mpc.append(x_next)
     res_u_mpc.append(u_k)
-    # 05
     
+
 # Make an array from the list of arrays:
 res_x_mpc = np.concatenate(res_x_mpc,axis=1)
 res_u_mpc = np.concatenate(res_u_mpc, axis=1)
-
+#res_theta = np.concatenate(res_x_mpc[:,0], axis = 1)
+#res_phi = np.concatenate(res_x_mpc[:,1], axis = 1)
 fig, ax = plt.subplots(2,1, figsize=(10,6))
 
+#print(res_x_mpc)
 # plot the states
-ax[0].plot(res_x_mpc.T)
+#ax[0].plot(res_x_mpc.T)
 ax[1].plot(res_u_mpc.T)
 
+ax[0].plot(res_x_mpc[0].T, res_x_mpc[1].T)
+
 # Set labels
-ax[0].set_ylabel('states')
+ax[0].set_ylabel('theta')
+ax[0].set_xlabel('phi')
+
 ax[1].set_ylabel('inputs')
 ax[1].set_xlabel('time')
 plt.show()
