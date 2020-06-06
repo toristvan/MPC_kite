@@ -20,11 +20,8 @@ beta = 0 # MX.sym("beta")
 rho = 1 # MX.sym("rho")
 L = 300 # MX.sym("l")
 A = 160 # MX.sym("A")
-hmin = 100
 
 
-#States and control variables
-nx = 3
 nu = 1
 
 x = SX.sym("x", nx, 1)
@@ -85,7 +82,7 @@ def LgrInter(tau_col, tau, xk):
 
 
 # collocation degree
-K = 2
+K = 3
 # collocation points
 tau_col = collocation_points(K, 'radau')
 #tau_col = collocation_points(K, 'legendre')
@@ -283,6 +280,8 @@ ax[2][1].plot(res_x_mpc[2].T)
 ax[0][2].plot(costs.T)
 ax[0][2].set_xlabel('time')
 ax[0][2].set_ylabel('cost')
+
+ax[0].plot(res_x_mpc[0].T, res_x_mpc[1].T)
 
 # Set labels
 ax[1][0].set_ylabel('theta')
