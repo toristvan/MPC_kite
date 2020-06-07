@@ -5,9 +5,9 @@ from casadi import *
 from casadi.tools import *
 
 #Simulation parameters
-N_sim = 100
+N_sim = 200
 N = 50
-dt = 0.3
+dt = 0.2
 
 #System Parameters
 E0 = 5 # MX.sym("E0")
@@ -20,8 +20,9 @@ beta = 0 # MX.sym("beta")
 rho = 1 # MX.sym("rho")
 L = 300 # MX.sym("l")
 A = 160 # MX.sym("A")
+hmin = 100
 
-
+nx = 3
 nu = 1
 
 x = SX.sym("x", nx, 1)
@@ -123,8 +124,8 @@ N = 50
 
 #state_constraints
 #TODO: do something with constraint for psi
-lb_x = np.array([0,-np.pi/2, -np.inf])
-ub_x = np.array([np.pi/2,np.pi/2, np.inf])
+lb_x = np.array([0,-np.pi/2, -np.pi])
+ub_x = np.array([np.pi/2,np.pi/2, np.pi])
 
 lb_u = np.array([-10])
 ub_u = np.array([10])
@@ -258,16 +259,12 @@ costs = np.concatenate(costs, axis=1)
 
 fig, ax = plt.subplots(3,3, figsize=(15,12))
 
-#print(res_x_mpc)
-# plot the states
-#ax[0].plot(res_x_mpc.T)
-ax[2][0].plot(res_u_mpc.T)
-
-#plot angles towards each other
-ax[1][0].plot(res_x_mpc[1].T, res_x_mpc[0].T)
-
 #plot position
 ax[0][0].plot(L*sin(res_x_mpc[0].T)*sin(res_x_mpc[1].T), L*sin(res_x_mpc[0].T)*cos(res_x_mpc[1].T))
+#plot angles towards each other
+ax[1][0].plot(res_x_mpc[1].T, res_x_mpc[0].T)
+# plot the input
+ax[2][0].plot(res_u_mpc.T)
 
 #plot angles over time
 ax[0][1].plot(res_x_mpc[0].T)
@@ -281,7 +278,7 @@ ax[0][2].plot(costs.T)
 ax[0][2].set_xlabel('time')
 ax[0][2].set_ylabel('cost')
 
-ax[0].plot(res_x_mpc[0].T, res_x_mpc[1].T)
+#ax[0].plot(res_x_mpc[0].T, res_x_mpc[1].T)
 
 # Set labels
 ax[1][0].set_ylabel('theta')
