@@ -184,7 +184,7 @@ for i in range(N):
         lb_g.append(np.zeros((nx,1)))
         ub_g.append(np.zeros((nx,1)))   
 
-    #TODO: add inequality constraints
+    #inequality constraints
     ineq = height_fcn(opt_x['x', i, 0])
     #ineq = L*cos(opt_x['x', i, 0, 1])*sin(opt_x['x', i, 0, 0])
     g.append(ineq)
