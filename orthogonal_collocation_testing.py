@@ -377,7 +377,7 @@ def test_orth_col():
 
     N_sim = 200
     #N = 50
-    dt = 0.3
+    dt = 0.2 #test also for 0.4
 
     #For plotting
     fig, ax = plt.subplots(3,2, figsize=(24,15))
@@ -392,8 +392,9 @@ def test_orth_col():
     for color in mcd.XKCD_COLORS:
         plotcolors = plotcolors + [color]
     color_index=0
-
-    for K in range(6,8):
+    #K = 3
+    for K in range(3,7):
+        #dt = dt*faktor
         # collocation points
         tau_cols = [collocation_points(K, 'radau')]
         tau_cols.append(collocation_points(K, 'legendre'))
@@ -409,7 +410,7 @@ def test_orth_col():
             else:
                 tau_col_str = "legendre"
 
-            for N in range(30, 51, 10):
+            for N in range(40, 51, 10):
                 res_x_mpc, res_u_mpc, costs, solve_times = Orthogonal_collocation_MPC(K=K, N=N, N_sim=N_sim, dt=dt, collocation_tech=tau_col_str)
 
                 figk, axk = plt.subplots(3,3, figsize=(21,15))
@@ -470,10 +471,10 @@ def test_orth_col():
                 color_index+=1
 
                 # Set labels
-                ax[1][0].set_ylabel('theta')
-                axk[1][0].set_ylabel('theta')
-                ax[1][0].set_xlabel('phi')
-                axk[1][0].set_xlabel('phi')
+                #ax[1][0].set_ylabel('theta')
+                #axk[1][0].set_ylabel('theta')
+                #ax[1][0].set_xlabel('phi')
+                #axk[1][0].set_xlabel('phi')
 
                 ax[0][0].set_ylabel('height')
                 axk[0][0].set_ylabel('height')
@@ -483,8 +484,8 @@ def test_orth_col():
                 ax[1][0].set_ylabel('input[N]')
                 ax[1][0].set_xlabel('time['+str(dt)+'sec]')
 
-                axk[2][0].set_ylabel('input[N]')
-                axk[2][0].set_xlabel('time['+str(dt)+'sec]')
+                axk[1][0].set_ylabel('input[N]')
+                axk[1][0].set_xlabel('time['+str(dt)+'sec]')
 
                 ax[0][1].set_ylabel('theta')
                 axk[0][1].set_ylabel('theta')
@@ -505,9 +506,13 @@ def test_orth_col():
 
                 figk.savefig("Plots/png/orth_col_K="+str(K)+"_N="+str(N)+"_col_points="+tau_col_str+"_dt="+str(dt)+".png")
                 figk.savefig("Plots/eps/orth_col_K="+str(K)+"_N="+str(N)+"_col_points="+tau_col_str+"_dt="+str(dt)+".eps")
+                #igk.savefig("Plots/fig/orth_col_K="+str(K)+"_N="+str(N)+"_col_points="+tau_col_str+"_dt="+str(dt)+".fig")
+
 
 
     fig.savefig("Plots/png/orth_col_all_dt="+str(dt)+".png")
     fig.savefig("Plots/eps/orth_col_all_dt="+str(dt)+".eps")
+    #fig.savefig("Plots/fig/orth_col_all_dt="+str(dt)+".fig")
+
 
     #plt.show()

@@ -3,9 +3,9 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl 
 from casadi import *
 from casadi.tools import *
-from orthogonal_collocation import Orthogonal_collocation_MPC
+#from orthogonal_collocation import Orthogonal_collocation_MPC
 from orthogonal_collocation_testing import test_orth_col
-from datetime import datetime
+#from datetime import datetime
 
 def main():
     
