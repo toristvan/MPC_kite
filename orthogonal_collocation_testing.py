@@ -380,7 +380,7 @@ def test_orth_col():
     dt = 0.3
 
     #For plotting
-    fig, ax = plt.subplots(3,2, figsize=(15,24))
+    fig, ax = plt.subplots(3,2, figsize=(24,15))
     fig.suptitle("Orthogonal collocation for all K's, N's and collocation points")
     ax[0][0].set_title("Position of kite")
     ax[1][0].set_title("Control input")
@@ -412,7 +412,7 @@ def test_orth_col():
             for N in range(30, 51, 10):
                 res_x_mpc, res_u_mpc, costs, solve_times = Orthogonal_collocation_MPC(K=K, N=N, N_sim=N_sim, dt=dt, collocation_tech=tau_col_str)
 
-                figk, axk = plt.subplots(3,3, figsize=(15,21))
+                figk, axk = plt.subplots(3,3, figsize=(21,15))
                 
                 costs_mean = np.mean(costs)
                 tsol_mean = np.mean(solve_times)
@@ -426,13 +426,13 @@ def test_orth_col():
 
                 #plot angles towards each other
                 #ax[1][0].plot(res_x_mpc[1].T, res_x_mpc[0].T)
-                axk[1][0].plot(res_x_mpc[1].T, res_x_mpc[0].T)
+                #axk[1][0].plot(res_x_mpc[1].T, res_x_mpc[0].T)
 
                 # plot the input
                 ax[1][0].plot(res_u_mpc.T, label = 'K='+str(K)+', N='+str(N)+', col_points='+tau_col_str, color = plotcolors[color_index])
                 
-                axk[2][0].plot(res_u_mpc.T)
-                axk[2][0].set_title("Control input")
+                axk[1][0].plot(res_u_mpc.T)
+                axk[1][0].set_title("Control input")
 
                 #plot angles over time
                 ax[0][1].plot(res_x_mpc[0].T, label = 'K='+str(K)+', N='+str(N)+', col_points='+tau_col_str, color = plotcolors[color_index])
