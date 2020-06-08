@@ -4,6 +4,8 @@ import matplotlib as mpl
 from casadi import *
 from casadi.tools import *
 import matplotlib._color_data as mcd
+from orthogonal_collocation import Orthogonal_collocation_MPC
+
 
 #Simulation parameters
 N_sim = 200
@@ -281,7 +283,7 @@ for K in range(2,6):
             res_u_mpc = np.concatenate(res_u_mpc, axis=1)
 
             costs = np.concatenate(costs, axis=1)
-
+            '''
             figk, axk = plt.subplots(3,3, figsize=(15,21))
 
             #plot position
@@ -316,13 +318,14 @@ for K in range(2,6):
             #ax[0][2].plot(costs.T)
             axk[0][2].plot(costs.T)
             #ax[0][2].set_xlabel('time')
-            axk[0][2].set_xlabel('time[0.2 sec]')
+            axk[0][2].set_xlabel('time['+str(dt)+'sec]')
             #ax[0][2].set_ylabel('cost')
             axk[0][2].set_ylabel('cost')
             axk[0][2].set_title("Cost at given time")
 
             ax[2][0].axhline(costs_mean, label = 'K='+str(K)+', N='+str(N)+', col_points='+tau_col_str, color = plotcolors[color_index])
             ax[2][0].set_ylabel('cost')
+
 
             color_index+=1
 
@@ -338,25 +341,25 @@ for K in range(2,6):
             axk[0][0].set_xlabel('horizontal position')
 
             ax[1][0].set_ylabel('input[N]')
-            ax[1][0].set_xlabel('time[0.2 sec]')
+            ax[1][0].set_xlabel('time['+str(dt)+' sec]')
 
             axk[2][0].set_ylabel('input[N]')
-            axk[2][0].set_xlabel('time[0.2 sec]')
+            axk[2][0].set_xlabel('time['+str(dt)+' sec]')
 
             ax[0][1].set_ylabel('theta')
             axk[0][1].set_ylabel('theta')
-            ax[0][1].set_xlabel('time[0.2 sec]')
-            axk[0][1].set_xlabel('time[0.2 sec]')
+            ax[0][1].set_xlabel('time['+str(dt)+' sec]')
+            axk[0][1].set_xlabel('time['+str(dt)+' sec]')
 
             ax[1][1].set_ylabel('phi')
             axk[1][1].set_ylabel('phi')
-            ax[1][1].set_xlabel('time[0.2 sec]')
-            axk[1][1].set_xlabel('time[0.2 sec]')
+            ax[1][1].set_xlabel('time['+str(dt)+' sec]')
+            axk[1][1].set_xlabel('time['+str(dt)+' sec]')
 
             ax[2][1].set_ylabel('psi')
             axk[2][1].set_ylabel('psi')
-            ax[2][1].set_xlabel('time[0.2 sec]')
-            axk[2][1].set_xlabel('time[0.2 sec]')
+            ax[2][1].set_xlabel('time['+str(dt)+' sec]')
+            axk[2][1].set_xlabel('time['+str(dt)+' sec]')
 
             figk.suptitle("Orthogonal collocation with K="+str(K)+", N="+str(N)+", col points="+tau_col_str)
 
@@ -368,3 +371,143 @@ fig.savefig("Plots/png/orth_col_all.png")
 fig.savefig("Plots/eps/orth_col_all.eps")
 
 plt.show()
+'''
+
+def test_orth_col():
+
+    N_sim = 200
+    #N = 50
+    dt = 0.3
+
+    #For plotting
+    fig, ax = plt.subplots(3,2, figsize=(15,24))
+    fig.suptitle("Orthogonal collocation for all K's, N's and collocation points")
+    ax[0][0].set_title("Position of kite")
+    ax[1][0].set_title("Control input")
+    ax[2][0].set_title("Mean cost")
+
+
+    #size=3*2*8
+    plotcolors = []
+    for color in mcd.XKCD_COLORS:
+        plotcolors = plotcolors + [color]
+    color_index=0
+
+    for K in range(6,8):
+        # collocation points
+        tau_cols = [collocation_points(K, 'radau')]
+        tau_cols.append(collocation_points(K, 'legendre'))
+        #tau_col = collocation_points(K, 'radau')
+        #tau_col = collocation_points(K, 'legendre')
+        for tc in range (len(tau_cols)):
+            tau_col = tau_cols[tc]
+            tau_col = [0]+tau_col
+
+            tau_col_str=""
+            if tc == 0:
+                tau_col_str = "radau"
+            else:
+                tau_col_str = "legendre"
+
+            for N in range(30, 51, 10):
+                res_x_mpc, res_u_mpc, costs, solve_times = Orthogonal_collocation_MPC(K=K, N=N, N_sim=N_sim, dt=dt, collocation_tech=tau_col_str)
+
+                figk, axk = plt.subplots(3,3, figsize=(15,21))
+                
+                costs_mean = np.mean(costs)
+                tsol_mean = np.mean(solve_times)
+                tsol_max = np.max(solve_times)
+
+
+                #plot position
+                ax[0][0].plot(L*sin(res_x_mpc[0].T)*sin(res_x_mpc[1].T), L*sin(res_x_mpc[0].T)*cos(res_x_mpc[1].T), label = 'K='+str(K)+', N='+str(N)+', col_points='+tau_col_str, color = plotcolors[color_index])
+                axk[0][0].plot(L*sin(res_x_mpc[0].T)*sin(res_x_mpc[1].T), L*sin(res_x_mpc[0].T)*cos(res_x_mpc[1].T))
+                axk[0][0].set_title("Position of kite, x and y")
+
+                #plot angles towards each other
+                #ax[1][0].plot(res_x_mpc[1].T, res_x_mpc[0].T)
+                axk[1][0].plot(res_x_mpc[1].T, res_x_mpc[0].T)
+
+                # plot the input
+                ax[1][0].plot(res_u_mpc.T, label = 'K='+str(K)+', N='+str(N)+', col_points='+tau_col_str, color = plotcolors[color_index])
+                
+                axk[2][0].plot(res_u_mpc.T)
+                axk[2][0].set_title("Control input")
+
+                #plot angles over time
+                ax[0][1].plot(res_x_mpc[0].T, label = 'K='+str(K)+', N='+str(N)+', col_points='+tau_col_str, color = plotcolors[color_index])
+                axk[0][1].plot(res_x_mpc[0].T)
+
+                ax[1][1].plot(res_x_mpc[1].T, label = 'K='+str(K)+', N='+str(N)+', col_points='+tau_col_str, color = plotcolors[color_index])
+                axk[1][1].plot(res_x_mpc[1].T)
+
+                ax[2][1].plot(res_x_mpc[2].T, label = 'K='+str(K)+', N='+str(N)+', col_points='+tau_col_str, color = plotcolors[color_index])
+                axk[2][1].plot(res_x_mpc[2].T)
+
+                #plot wind
+                #ax[2][1].plot(t_k, v0_fcn(t_k))
+                #plot cost
+                costs_mean = np.mean(costs)
+                #ax[0][2].plot(costs.T)
+                axk[0][2].plot(costs.T)
+                #ax[0][2].set_xlabel('time')
+                axk[0][2].set_xlabel('time['+str(dt)+'sec]')
+                #ax[0][2].set_ylabel('cost')
+                axk[0][2].set_ylabel('cost')
+                axk[0][2].set_title("Cost at given time")
+
+                ax[2][0].axhline(costs_mean, label = 'K='+str(K)+', N='+str(N)+', col_points='+tau_col_str, color = plotcolors[color_index])
+                ax[2][0].set_ylabel('cost')
+
+                #plot times
+                axk[1][2].plot(solve_times)
+                axk[1][2].set_xlabel('number of runs')
+                axk[1][2].set_xlabel('time spent on runs [s]')
+                axk[1][2].axhline(tsol_mean, label='mean runtime', color='k')
+                axk[1][2].axhline(tsol_max, label='max runtime', color='r')
+                axk[1][2].legend()
+
+                color_index+=1
+
+                # Set labels
+                ax[1][0].set_ylabel('theta')
+                axk[1][0].set_ylabel('theta')
+                ax[1][0].set_xlabel('phi')
+                axk[1][0].set_xlabel('phi')
+
+                ax[0][0].set_ylabel('height')
+                axk[0][0].set_ylabel('height')
+                ax[0][0].set_xlabel('horizontal position')
+                axk[0][0].set_xlabel('horizontal position')
+
+                ax[1][0].set_ylabel('input[N]')
+                ax[1][0].set_xlabel('time['+str(dt)+'sec]')
+
+                axk[2][0].set_ylabel('input[N]')
+                axk[2][0].set_xlabel('time['+str(dt)+'sec]')
+
+                ax[0][1].set_ylabel('theta')
+                axk[0][1].set_ylabel('theta')
+                ax[0][1].set_xlabel('time['+str(dt)+'sec]')
+                axk[0][1].set_xlabel('time['+str(dt)+'sec]')
+
+                ax[1][1].set_ylabel('phi')
+                axk[1][1].set_ylabel('phi')
+                ax[1][1].set_xlabel('time['+str(dt)+'sec]')
+                axk[1][1].set_xlabel('time['+str(dt)+'sec]')
+
+                ax[2][1].set_ylabel('psi')
+                axk[2][1].set_ylabel('psi')
+                ax[2][1].set_xlabel('time['+str(dt)+'sec]')
+                axk[2][1].set_xlabel('time['+str(dt)+'sec]')
+
+                figk.suptitle("Orthogonal collocation with K="+str(K)+", N="+str(N)+", col points="+tau_col_str+", dt="+str(dt))
+
+                figk.savefig("Plots/png/orth_col_K="+str(K)+"_N="+str(N)+"_col_points="+tau_col_str+"_dt="+str(dt)+".png")
+                figk.savefig("Plots/eps/orth_col_K="+str(K)+"_N="+str(N)+"_col_points="+tau_col_str+"_dt="+str(dt)+".eps")
+
+
+    fig.savefig("Plots/png/orth_col_all_dt="+str(dt)+".png")
+    fig.savefig("Plots/eps/orth_col_all_dt="+str(dt)+".eps")
+
+    #plt.show()

@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl 
 from casadi import *
 from casadi.tools import *
+from datetime import datetime
 
 #Simulation parameters
 N_sim = 200
@@ -212,18 +213,20 @@ def Orthogonal_collocation_MPC(K=3, N=50, N_sim=200, dt=0.2, nx=3, nu=1, E0=5, v
     res_x_mpc = [x_0]
     res_u_mpc = []
     costs =[]
-
+    solve_times = []
 
     for i in range(N_sim):
+        start_time = datetime.now().timestamp()
         # solve optimization problem
-        mpc_res = mpc_solver(p=vertcat(x_0, t_k[i:N+i]), lbg=lb_g, ubg=ub_g, lbx = lb_opt_x, ubx = ub_opt_x)
-        
-        # optionally: Warmstart the optimizer by passing the previous solution as an initial guess!
-        if i>0:
+        if i == 0:
+            mpc_res = mpc_solver(p=vertcat(x_0, t_k[i:N+i]), lbg=lb_g, ubg=ub_g, lbx = lb_opt_x, ubx = ub_opt_x)
+            # optionally: Warmstart the optimizer by passing the previous solution as an initial guess!
+        else:
             #mpc_res = mpc_solver(p=x_0, x0=opt_x_k, lbg=0, ubg=0, lbx = lb_opt_x, ubx = ub_opt_x)
             mpc_res = mpc_solver(p=vertcat(x_0, t_k[i:N+i]),x0=opt_x_k, lbg=lb_g, ubg=ub_g, lbx = lb_opt_x, ubx = ub_opt_x)
 
-            
+        
+        solve_times.append([datetime.now().timestamp() - start_time])
         #extract cost
         cost_k = mpc_res['f']
         costs.append(cost_k)
@@ -242,6 +245,7 @@ def Orthogonal_collocation_MPC(K=3, N=50, N_sim=200, dt=0.2, nx=3, nu=1, E0=5, v
         # Store the results
         res_x_mpc.append(x_next)
         res_u_mpc.append(u_k)
+
         
 
     # Make an array from the list of arrays:
@@ -249,9 +253,11 @@ def Orthogonal_collocation_MPC(K=3, N=50, N_sim=200, dt=0.2, nx=3, nu=1, E0=5, v
     res_u_mpc = np.concatenate(res_u_mpc, axis=1)
 
     costs = np.concatenate(costs, axis=1)
+    solve_times = np.reshape(solve_times,(-1,1))
+    #solve_times = np.concatenate(solve_times, axis=1)
     #cost_mean = np.mean(costs)
 
-    return res_x_mpc, res_u_mpc, costs
+    return res_x_mpc, res_u_mpc, costs, solve_times
 
 '''
 fig, ax = plt.subplots(3,3, figsize=(15,12))
