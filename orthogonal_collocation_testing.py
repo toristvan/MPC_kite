@@ -103,7 +103,7 @@ ub_u = np.array([10])
 
 
 #For plotting
-fig, ax = plt.subplots(3,2, figsize=(18,18))
+fig, ax = plt.subplots(3,2, figsize=(15,18))
 fig.suptitle("Orthogonal collocation for all K's, N's and collocation points")
 ax[0][0].set_title("Position of kite")
 ax[1][0].set_title("Control input")
@@ -113,10 +113,10 @@ ax[2][0].set_title("Mean cost")
 #size=3*2*8
 plotcolors = []
 for color in mcd.XKCD_COLORS:
-    plotcolors = colors + [color]
+    plotcolors = plotcolors + [color]
 color_index=0
 
-for K in range(2,8):
+for K in range(2,6):
 
     # collocation points
     tau_cols = [collocation_points(K, 'radau')]
@@ -156,7 +156,7 @@ for K in range(2,8):
 
         ##  MPC loop
         #prediction horizon
-        for N in range (30, 81, 10):
+        for N in range (50, 61, 10):
             
             #optimization variables
 
@@ -282,7 +282,7 @@ for K in range(2,8):
 
             costs = np.concatenate(costs, axis=1)
 
-            figk, axk = plt.subplots(3,3, figsize=(18,21))
+            figk, axk = plt.subplots(3,3, figsize=(15,21))
 
             #plot position
             ax[0][0].plot(L*sin(res_x_mpc[0].T)*sin(res_x_mpc[1].T), L*sin(res_x_mpc[0].T)*cos(res_x_mpc[1].T), label = 'K='+str(K)+', N='+str(N)+', col_points='+tau_col_str, color = plotcolors[color_index])
@@ -321,7 +321,7 @@ for K in range(2,8):
             axk[0][2].set_ylabel('cost')
             axk[0][2].set_title("Cost at given time")
 
-            ax[2][0].hline(costs_mean, label = 'K='+str(K)+', N='+str(N)+', col_points='+tau_col_str, color = plotcolors[color_index])
+            ax[2][0].axhline(costs_mean, label = 'K='+str(K)+', N='+str(N)+', col_points='+tau_col_str, color = plotcolors[color_index])
             ax[2][0].set_ylabel('cost')
 
             color_index+=1
@@ -358,7 +358,7 @@ for K in range(2,8):
             ax[2][1].set_xlabel('time[0.2 sec]')
             axk[2][1].set_xlabel('time[0.2 sec]')
 
-            figk.suptitle("Orthogonal collocation with K="+str(K)+", N="+str(N)+", col points="+tau_col_str+)
+            figk.suptitle("Orthogonal collocation with K="+str(K)+", N="+str(N)+", col points="+tau_col_str)
 
             figk.savefig("Plots/png/orth_col_K="+str(K)+"_N="+str(N)+"_col_points="+tau_col_str+".png")
             figk.savefig("Plots/eps/orth_col_K="+str(K)+"_N="+str(N)+"_col_points="+tau_col_str+".eps")
