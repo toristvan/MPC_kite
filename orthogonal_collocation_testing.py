@@ -5,6 +5,7 @@ from casadi import *
 from casadi.tools import *
 import matplotlib._color_data as mcd
 from orthogonal_collocation import Orthogonal_collocation_MPC
+import math
 
 
 #Simulation parameters
@@ -283,104 +284,26 @@ for K in range(2,6):
             res_u_mpc = np.concatenate(res_u_mpc, axis=1)
 
             costs = np.concatenate(costs, axis=1)
-            '''
-            figk, axk = plt.subplots(3,3, figsize=(15,21))
-
-            #plot position
-            ax[0][0].plot(L*sin(res_x_mpc[0].T)*sin(res_x_mpc[1].T), L*sin(res_x_mpc[0].T)*cos(res_x_mpc[1].T), label = 'K='+str(K)+', N='+str(N)+', col_points='+tau_col_str, color = plotcolors[color_index])
-            axk[0][0].plot(L*sin(res_x_mpc[0].T)*sin(res_x_mpc[1].T), L*sin(res_x_mpc[0].T)*cos(res_x_mpc[1].T))
-            axk[0][0].set_title("Position of kite, x and y")
-
-            #plot angles towards each other
-            #ax[1][0].plot(res_x_mpc[1].T, res_x_mpc[0].T)
-            axk[1][0].plot(res_x_mpc[1].T, res_x_mpc[0].T)
-
-            # plot the input
-            ax[1][0].plot(res_u_mpc.T, label = 'K='+str(K)+', N='+str(N)+', col_points='+tau_col_str, color = plotcolors[color_index])
-            
-            axk[2][0].plot(res_u_mpc.T)
-            axk[2][0].set_title("Control input")
-
-            #plot angles over time
-            ax[0][1].plot(res_x_mpc[0].T, label = 'K='+str(K)+', N='+str(N)+', col_points='+tau_col_str, color = plotcolors[color_index])
-            axk[0][1].plot(res_x_mpc[0].T)
-
-            ax[1][1].plot(res_x_mpc[1].T, label = 'K='+str(K)+', N='+str(N)+', col_points='+tau_col_str, color = plotcolors[color_index])
-            axk[1][1].plot(res_x_mpc[1].T)
-
-            ax[2][1].plot(res_x_mpc[2].T, label = 'K='+str(K)+', N='+str(N)+', col_points='+tau_col_str, color = plotcolors[color_index])
-            axk[2][1].plot(res_x_mpc[2].T)
-
-            #plot wind
-            #ax[2][1].plot(t_k, v0_fcn(t_k))
-            #plot cost
-            costs_mean = np.mean(costs)
-            #ax[0][2].plot(costs.T)
-            axk[0][2].plot(costs.T)
-            #ax[0][2].set_xlabel('time')
-            axk[0][2].set_xlabel('time['+str(dt)+'sec]')
-            #ax[0][2].set_ylabel('cost')
-            axk[0][2].set_ylabel('cost')
-            axk[0][2].set_title("Cost at given time")
-
-            ax[2][0].axhline(costs_mean, label = 'K='+str(K)+', N='+str(N)+', col_points='+tau_col_str, color = plotcolors[color_index])
-            ax[2][0].set_ylabel('cost')
 
 
-            color_index+=1
+def test_orth_col(dt = 0.2, Kmin=3, Kmax=6, Nmin=30, Nmax=60, N_sim=200):
 
-            # Set labels
-            ax[1][0].set_ylabel('theta')
-            axk[1][0].set_ylabel('theta')
-            ax[1][0].set_xlabel('phi')
-            axk[1][0].set_xlabel('phi')
-
-            ax[0][0].set_ylabel('height')
-            axk[0][0].set_ylabel('height')
-            ax[0][0].set_xlabel('horizontal position')
-            axk[0][0].set_xlabel('horizontal position')
-
-            ax[1][0].set_ylabel('input[N]')
-            ax[1][0].set_xlabel('time['+str(dt)+' sec]')
-
-            axk[2][0].set_ylabel('input[N]')
-            axk[2][0].set_xlabel('time['+str(dt)+' sec]')
-
-            ax[0][1].set_ylabel('theta')
-            axk[0][1].set_ylabel('theta')
-            ax[0][1].set_xlabel('time['+str(dt)+' sec]')
-            axk[0][1].set_xlabel('time['+str(dt)+' sec]')
-
-            ax[1][1].set_ylabel('phi')
-            axk[1][1].set_ylabel('phi')
-            ax[1][1].set_xlabel('time['+str(dt)+' sec]')
-            axk[1][1].set_xlabel('time['+str(dt)+' sec]')
-
-            ax[2][1].set_ylabel('psi')
-            axk[2][1].set_ylabel('psi')
-            ax[2][1].set_xlabel('time['+str(dt)+' sec]')
-            axk[2][1].set_xlabel('time['+str(dt)+' sec]')
-
-            figk.suptitle("Orthogonal collocation with K="+str(K)+", N="+str(N)+", col points="+tau_col_str)
-
-            figk.savefig("Plots/png/orth_col_K="+str(K)+"_N="+str(N)+"_col_points="+tau_col_str+".png")
-            figk.savefig("Plots/eps/orth_col_K="+str(K)+"_N="+str(N)+"_col_points="+tau_col_str+".eps")
-
-
-fig.savefig("Plots/png/orth_col_all.png")
-fig.savefig("Plots/eps/orth_col_all.eps")
-
-plt.show()
-'''
-
-def test_orth_col():
-
-    N_sim = 200
-    #N = 50
-    dt = 0.2 #test also for 0.4
+    #For record keeping.
+    min_avg_cost = 0
+    min_cost_fluctuation = 100000
+    K_min_avg_cost = 0
+    N_min_avg_cost = 0
+    col_points_min_avg = ""
+    K_min_fluctuation = 0
+    N_min_fluctuation = 0
+    col_points_min_fluctuation = ""
+    x_min_avg_cost = np.zeros((1,1))
+    u_min_avg_cost = np.zeros((1,1))
+    x_min_fluctuation = np.zeros((1,1))
+    u_min_fluctuation = np.zeros((1,1))
 
     #For plotting
-    fig, ax = plt.subplots(3,2, figsize=(24,15))
+    fig, ax = plt.subplots(3,4, figsize=(28,15))
     fig.suptitle("Orthogonal collocation for all K's, N's and collocation points")
     ax[0][0].set_title("Position of kite")
     ax[1][0].set_title("Control input")
@@ -393,7 +316,7 @@ def test_orth_col():
         plotcolors = plotcolors + [color]
     color_index=0
     #K = 3
-    for K in range(3,7):
+    for K in range(Kmin,Kmax+1):
         #dt = dt*faktor
         # collocation points
         tau_cols = [collocation_points(K, 'radau')]
@@ -410,24 +333,38 @@ def test_orth_col():
             else:
                 tau_col_str = "legendre"
 
-            for N in range(40, 51, 10):
+            for N in range(Nmin, Nmax+1, 10):
                 res_x_mpc, res_u_mpc, costs, solve_times = Orthogonal_collocation_MPC(K=K, N=N, N_sim=N_sim, dt=dt, collocation_tech=tau_col_str)
 
                 figk, axk = plt.subplots(3,3, figsize=(21,15))
                 
                 costs_mean = np.mean(costs)
+                if costs_mean < min_avg_cost:
+                    min_avg_cost = costs_mean
+                    K_min_avg_cost = K
+                    N_min_avg_cost = N
+                    x_min_avg_cost = res_x_mpc
+                    u_min_avg_cost = res_u_mpc
+                    col_points_min_avg = tau_col_str
+                
+                if (math.fabs(np.max(costs)-costs_mean) + (math.fabs(costs_mean - np.min(costs)))) < min_cost_fluctuation:
+                    min_cost_fluctuation = math.fabs(np.max(costs)-costs_mean) + (math.fabs(costs_mean - np.min(costs)))
+                    K_min_fluctuation = K
+                    N_min_fluctuation = N
+                    x_min_fluctuation = res_x_mpc
+                    u_min_fluctuation = res_u_mpc
+                    col_points_min_fluctuation = tau_col_str
+
                 tsol_mean = np.mean(solve_times)
                 tsol_max = np.max(solve_times)
 
 
+                ## PLOTTING
                 #plot position
                 ax[0][0].plot(L*sin(res_x_mpc[0].T)*sin(res_x_mpc[1].T), L*sin(res_x_mpc[0].T)*cos(res_x_mpc[1].T), label = 'K='+str(K)+', N='+str(N)+', col_points='+tau_col_str, color = plotcolors[color_index])
+
                 axk[0][0].plot(L*sin(res_x_mpc[0].T)*sin(res_x_mpc[1].T), L*sin(res_x_mpc[0].T)*cos(res_x_mpc[1].T))
                 axk[0][0].set_title("Position of kite, x and y")
-
-                #plot angles towards each other
-                #ax[1][0].plot(res_x_mpc[1].T, res_x_mpc[0].T)
-                #axk[1][0].plot(res_x_mpc[1].T, res_x_mpc[0].T)
 
                 # plot the input
                 ax[1][0].plot(res_u_mpc.T, label = 'K='+str(K)+', N='+str(N)+', col_points='+tau_col_str, color = plotcolors[color_index])
@@ -447,20 +384,18 @@ def test_orth_col():
 
                 #plot wind
                 #ax[2][1].plot(t_k, v0_fcn(t_k))
+
                 #plot cost
-                costs_mean = np.mean(costs)
-                #ax[0][2].plot(costs.T)
                 axk[0][2].plot(costs.T)
-                #ax[0][2].set_xlabel('time')
+                axk[0][2].axhline(costs_mean)
                 axk[0][2].set_xlabel('time['+str(dt)+'sec]')
-                #ax[0][2].set_ylabel('cost')
                 axk[0][2].set_ylabel('cost')
                 axk[0][2].set_title("Cost at given time")
 
                 ax[2][0].axhline(costs_mean, label = 'K='+str(K)+', N='+str(N)+', col_points='+tau_col_str, color = plotcolors[color_index])
                 ax[2][0].set_ylabel('cost')
 
-                #plot times
+                #plot computational times
                 axk[1][2].plot(solve_times)
                 axk[1][2].set_xlabel('number of runs')
                 axk[1][2].set_xlabel('time spent on runs [s]')
@@ -469,12 +404,6 @@ def test_orth_col():
                 axk[1][2].legend()
 
                 color_index+=1
-
-                # Set labels
-                #ax[1][0].set_ylabel('theta')
-                #axk[1][0].set_ylabel('theta')
-                #ax[1][0].set_xlabel('phi')
-                #axk[1][0].set_xlabel('phi')
 
                 ax[0][0].set_ylabel('height')
                 axk[0][0].set_ylabel('height')
@@ -506,13 +435,63 @@ def test_orth_col():
 
                 figk.savefig("Plots/png/orth_col_K="+str(K)+"_N="+str(N)+"_col_points="+tau_col_str+"_dt="+str(dt)+".png")
                 figk.savefig("Plots/eps/orth_col_K="+str(K)+"_N="+str(N)+"_col_points="+tau_col_str+"_dt="+str(dt)+".eps")
-                #igk.savefig("Plots/fig/orth_col_K="+str(K)+"_N="+str(N)+"_col_points="+tau_col_str+"_dt="+str(dt)+".fig")
 
 
+    #plot best solutions with regard to cost
+    # lowest mean
+    ax[0][2].plot(L*sin(x_min_avg_cost[0].T)*sin(x_min_avg_cost[1].T), L*sin(x_min_avg_cost[0].T)*cos(x_min_avg_cost[1].T), label = 'K_min_avg='+str(K_min_avg_cost)+', N_min_avg='+str(N_min_avg_cost)+', col_points='+col_points_min_avg, color = plotcolors[color_index])
+    ax[1][2].plot(u_min_avg_cost.T, label = 'K_min_avg='+str(K_min_avg_cost)+', N_min_avg='+str(N_min_avg_cost)+', col_points='+col_points_min_avg, color = plotcolors[color_index])
+    ax[2][2].axhline(min_avg_cost, label = 'K_min_avg='+str(K_min_avg_cost)+', N_min_avg='+str(N_min_avg_cost)+', col_points='+col_points_min_avg, color = plotcolors[color_index])
+
+    ax[0][2].set_title("Trajectory with lowest avg cost")
+    ax[0][2].set_xlabel("Horizontal position")
+    ax[0][2].set_ylabel("Height")
+    ax[0][2].legend()
+
+    ax[1][2].set_title("Control input with lowest avg cost")
+    ax[1][2].set_ylabel("Input [N]")
+    ax[1][2].set_xlabel('time['+str(dt)+'sec]')
+    ax[1][2].legend()
+
+
+    ax[2][2].set_title("Lowest avg cost")
+    ax[2][2].set_ylabel("cost")
+    ax[2][2].legend()
+
+    color_index+=1
+    #least fluctuation
+    ax[0][3].plot(L*sin(x_min_fluctuation[0].T)*sin(x_min_fluctuation[1].T), L*sin(x_min_fluctuation[0].T)*cos(x_min_fluctuation[1].T), label = 'K least fluctuation='+str(K_min_fluctuation)+', N least fluctuation='+str(N_min_fluctuation)+', col_points='+col_points_min_fluctuation, color = plotcolors[color_index])
+    ax[1][3].plot(u_min_fluctuation.T, label = 'K least fluctuation='+str(K_min_fluctuation)+', N least fluctuation='+str(N_min_fluctuation)+', col_points='+col_points_min_fluctuation, color = plotcolors[color_index])
+    ax[2][3].axhline(min_avg_cost, label = 'K least fluctuation='+str(K_min_fluctuation)+', N least fluctuation='+str(N_min_fluctuation)+', col_points='+col_points_min_fluctuation, color = plotcolors[color_index])
+
+    ax[0][3].set_title("Trajectory with least fluctuating cost")
+    ax[0][3].set_xlabel("Horizontal position")
+    ax[0][3].set_ylabel("Height")
+    ax[0][3].legend()
+
+    ax[1][3].set_title("Control input with least fluctuating cost")
+    ax[1][3].set_ylabel("Input [N]")
+    ax[1][3].set_xlabel('time['+str(dt)+'sec]')
+    ax[1][3].legend()
+
+    ax[2][3].set_title("Maximum deviation from min cost to max cost")
+    ax[2][3].set_ylabel("cost")
+    ax[2][3].legend()
+    
 
     fig.savefig("Plots/png/orth_col_all_dt="+str(dt)+".png")
     fig.savefig("Plots/eps/orth_col_all_dt="+str(dt)+".eps")
-    #fig.savefig("Plots/fig/orth_col_all_dt="+str(dt)+".fig")
+
+    ax[0][2].legend()
+    ax[1][2].legend()
+    ax[2][2].legend()
+    ax[0][3].legend()
+    ax[1][3].legend()
+    ax[2][3].legend()
+
+    fig.savefig("Plots/png/orth_col_all_dt="+str(dt)+".png")
+    fig.savefig("Plots/eps/orth_col_all_dt="+str(dt)+".eps")
+    
 
 
     #plt.show()
