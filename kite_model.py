@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 # TODO Import here the discretization schemes later
 from implicit_euler import *
 from orthogonal_collocation import Orthogonal_collocation_MPC
+from single_shooting import single_shooting
 
 mpl.rcParams['font.size'] = 14
 
@@ -156,8 +157,7 @@ class World(object):
             #implicit_euler_discretization()
             pass
         elif discretization == 'single_shooting':
-            #single_shooting_discretization()
-            pass
+            return single_shooting()
         else :
             raise NameError('wrong discretization name')       
         
@@ -318,8 +318,9 @@ world.print_states(x_sim)
 # run real MPC problem
 #world.run_mpc(kite, physics, x_0, discretization='implicit_euler')
 #world.run_MPC(kite, physics, x_0, discretization='orthogonal_collocation')
+
 kite2 = world.Kite(theta=np.pi/4, phi = np.pi/4, psi = 0)
-x, u, cost, time = world.run_MPC(discretization='orthogonal_collocation')
+x, u, cost, time = world.run_MPC(discretization='single_shooting')
 world.plot_kite_trajectory_from_states(kite2, x=x)
 
 

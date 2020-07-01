@@ -1,24 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from datetime import datetime
 
-from casadi import *
 from casadi.tools import *
 
-###Only optimizing U causes it to complain when Xk is added to account for state constraints
-# - but X is not an optimization variable in this case so how should the state constraints be handeled?
-# If it is added to the problem it is considered a free variable that needs to be included in p - but then it complains
-# that there are too few DOF
+#T = 10.  # Time horizon
+#N = 5  # number of control intervals Based on this number you get the amount of u's
+#dt = T/N
+#N_sim = 80
+#K=3, N=50, N_sim=200, dt=0.2, nx=3, nu=1, E0=5, vm=10, vA=0.5, vf=0.1, voff=np.pi, c=0.028, beta=0, rho=1, L=300, A=160, hmin=100, collocation_tech='legendre'
+def single_shooting(N=5,N_sim=80, T=10):
 
-### Seems like it completely starts over for each iteration - something with the constraints?
-
-T = 10.  # Time horizon
-N = 20  # number of control intervals Based on this number you get the amount of u's
-dt = T/N
-
-def single_shooting():
-    T = 10.  # Time horizon
-    N = 20  # number of control intervals Based on this number you get the amount of u's
     dt = T/N
 
     # System Parameters
@@ -71,7 +64,6 @@ def single_shooting():
     stage_cost_fcn = Function('stage_cost_fcn', [x, u, t, u_old], [stage_cost])
 
     # CVODES from the SUNDIALS suite to construct the NLP
-    system = Function('sys', [x, u, t], [xdot])
     dae = {'x': x, 'p': vertcat(u, t, u_old), 'ode': xdot, 'quad': stage_cost}
     opts = {'tf': dt}
     F = integrator('F', 'cvodes', dae, opts)
@@ -88,7 +80,13 @@ def single_shooting():
     lb_u = -1.5 * np.ones((nu, 1))
     ub_u = 1.5 * np.ones((nu, 1))
 
-    Xk = MX([np.pi / 4, np.pi / 4, 0])
+    #Xk = MX([np.pi / 4, np.pi / 4, 0])
+    #Xk = MX.sym(nx, N+1)
+    x_init = MX.sym('x_init', nx)
+    #Xk = x_init
+
+    #x_0 = opt_x['x', 0, 0] ####ENDRET SIST HER -> fiks start constraints
+    #g.append(x_0 - x_init)
 
     # optimization variables and NLP
     U = MX.sym("U", N * nu, 1)
@@ -113,6 +111,7 @@ def single_shooting():
 
         if k == 0:
             u_prev = U[k * nu:(k + 1) * nu, :]
+            Xk = x_init
         else:
             u_prev = U[(k-1) * nu:k * nu, :]
 
@@ -126,13 +125,15 @@ def single_shooting():
         Xk = Fk['xf']
         J = J + Fk['qf']
 
-        # equality constraints (system equation)
-        #g.append(x_k_next - x_k_next_calc)
-        #lb_g.append(np.zeros((nx, 1)))
-        #ub_g.append(np.zeros((nx, 1)))
+        # state constraints
+        #lb_g += [Xk[0]]
+        #g += [Xk[0]]
+        g += [Xk]
+        ub_g += [ub_x]
+        lb_g += [lb_x]
 
-        lb_X.append(lb_x)
-        ub_X.append(ub_x)
+        #lb_X.append(lb_x)
+        #ub_X.append(ub_x)
         lb_U.append(lb_u)
         ub_U.append(ub_u)
 
@@ -146,11 +147,13 @@ def single_shooting():
     lbg = vertcat(*lb_g)
     ubg = vertcat(*ub_g)
 
-    prob = {'f': J, 'x': x, 'g': g, 'p': vertcat(tk)}
+    pr = vertcat(tk, x_init)
+    print(pr.shape)
+    prob = {'f': J, 'x': x, 'g': g, 'p': vertcat(tk, x_init)}
     solver = nlpsol('solver', 'ipopt', prob)
 
     # Set number of iterations
-    N_sim = 5
+    # N_sim = 10
 
     # Initialize result lists for states and inputs
     x_0 = np.array([np.pi / 4, np.pi / 4, 0]).reshape(nx, 1)
@@ -159,17 +162,20 @@ def single_shooting():
     res_u_mpc = []
     costs = []
     u_curr = []
+    u_plot = []
     solve_times = []
 
     for i in range(N_sim):
-        # Solve the NLP
+        start_time = datetime.now().timestamp()
         if i == 0:
-            sol = solver(x0=0.4, lbx=lbx, ubx=ubx,lbg=lbg, ubg=ubg)
+            sol = solver(p=vertcat(t_k[i:N+i], x_0), lbx=lbx, ubx=ubx, lbg=lbg, ubg=ubg)
         else:
-            sol = solver(lbx=lbx, ubx=ubx, lbg=lbg, ubg=ubg)
+            sol = solver(p=vertcat(t_k[i:N+i], x_0), x0=u_curr, lbx=lbx, ubx=ubx, lbg=lbg, ubg=ubg)
 
+        solve_times.append([datetime.now().timestamp() - start_time])
         u_curr = sol['x']
         u_k = u_curr[0]
+        u_plot.append(u_k)
 
         # append cost
         cost_k = sol['f']
@@ -186,9 +192,12 @@ def single_shooting():
         res_x_mpc.append(x_next)
         res_u_mpc.append(u_k)
 
-    # res_x_mpc = np.concatenate(res_x_mpc, axis=1)
-    # res_u_mpc = np.concatenate(res_u_mpc, axis=1)
-    #
+    res_x_mpc = np.concatenate(res_x_mpc, axis=1)
+    res_u_mpc = np.concatenate(res_u_mpc, axis=1)
+
+    costs = np.concatenate(costs, axis=1)
+    solve_times = np.reshape(solve_times, (-1, 1))
+
     # fig, ax = plt.subplots(2, 1, figsize=(10, 6))
     #
     # # plot the states
@@ -199,24 +208,22 @@ def single_shooting():
     # ax[0].set_ylabel('states')
     # ax[1].set_ylabel('inputs')
     # ax[1].set_xlabel('time')
+    # plt.show()
+    #np.vstack(u_plot), F,
 
-    return u_curr, F
+    return res_x_mpc, res_u_mpc, costs, solve_times
 
-def plotSingleHorizon(u_opt, T, N, F, dt):
-
+def plotHorizon(u_opt, T, N, F, dt):
     # Plot the solution
-    print(u_opt, type(u_opt))
     x_opt = [[np.pi / 4, np.pi / 4, 0]]
     t_k = np.array(np.linspace(0, T, N))
     u_0 = u_opt[0]
-    print("start printing:")
     for k in range(N):
         Fk = F(x0=x_opt[-1], p=vertcat(u_opt[k], t_k[k], u_0))
         x_opt += [Fk['xf'].full()]
         u_0 = u_opt[k]
     x1_opt = [r[0] for r in x_opt]
     x2_opt = [r[1] for r in x_opt]
-    print("x2_opt: ", x2_opt)
     x3_opt = [r[2] for r in x_opt]
 
     tgrid = [dt * k for k in range(N + 1)]
@@ -232,6 +239,9 @@ def plotSingleHorizon(u_opt, T, N, F, dt):
     plt.grid()
     plt.show()
 
-u, F = single_shooting()
+#u, F, _, _, _, _ = single_shooting()
+#T = 10
+#N_sim = 80
+#dt = 10/5
 
-plotSingleHorizon(u, T, N, F, dt)
+#plotHorizon(u, T, N_sim, F, dt)
