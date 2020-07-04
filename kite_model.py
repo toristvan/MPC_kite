@@ -102,7 +102,7 @@ class World(object):
             self.va_fcn = Function('va_fcn', [self.x, self.t], [self.va])
             self.PD = self.rho*(self.v0_fcn(self.t)**2)/2
             self.PD_fcn = Function('PD_fcn', [self.t], [self.PD])
-            self.TF = self.PD_fcn(self.t)*kite.A*(cos(self.x[0])**2)*(self.E_fcn(self.u) + 1)*np.sqrt(self.E_fcn(self.u)**2 + 1)*(cos(self.x[0])*cos(self.beta) + sin(self.x[0])*sin(self.beta)*sin(self.x[1]))
+            self.TF = self.PD_fcn(self.t)*kite.A*(cos(self.x[0])**2)*(self.E_fcn(self.u) + 1)*sqrt(self.E_fcn(self.u)**2 + 1)*(cos(self.x[0])*cos(self.beta) + sin(self.x[0])*sin(self.beta)*sin(self.x[1]))
             self.tension = Function('tension', [self.x,self.u,self.t], [self.TF])
             
             self.xdot = vertcat((self.va_fcn(self.x, self.t)/kite.L)*(cos(self.x[2]) - tan(self.x[0])/self.E_fcn(self.u)), 

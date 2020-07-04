@@ -45,7 +45,7 @@ def single_shooting(N=5,N_sim=80, T=10):
     va_fcn = Function('va_fcn', [x, t], [va])
     PD = rho * (v0_fcn(t) ** 2) / 2
     PD_fcn = Function('PD_fcn', [t], [PD])
-    TF = PD_fcn(t) * A * (cos(x[0]) ** 2) * (E_fcn(u) + 1) * np.sqrt(E_fcn(u) ** 2 + 1) * (
+    TF = PD_fcn(t) * A * (cos(x[0]) ** 2) * (E_fcn(u) + 1) * sqrt(E_fcn(u) ** 2 + 1) * (
             cos(x[0]) * cos(beta) + sin(x[0]) * sin(beta) * sin(x[1]))
     tension = Function('tension', [x, u, t], [TF])
 
