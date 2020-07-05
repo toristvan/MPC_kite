@@ -5,11 +5,6 @@ from datetime import datetime
 
 from casadi.tools import *
 
-#T = 10.  # Time horizon
-#N = 5  # number of control intervals Based on this number you get the amount of u's
-#dt = T/N
-#N_sim = 80
-#K=3, N=50, N_sim=200, dt=0.2, nx=3, nu=1, E0=5, vm=10, vA=0.5, vf=0.1, voff=np.pi, c=0.028, beta=0, rho=1, L=300, A=160, hmin=100, collocation_tech='legendre'
 def single_shooting(N=5,N_sim=80, T=10):
 
     dt = T/N
@@ -68,7 +63,7 @@ def single_shooting(N=5,N_sim=80, T=10):
     opts = {'tf': dt}
     F = integrator('F', 'cvodes', dae, opts)
 
-    # system integrator ODE
+    # system ODE integrator
     ode = {'x': x, 'ode': xdot, 'p': vertcat(u, t)}
     opts = {'tf': dt}
     ode_solver = integrator('F', 'idas', ode, opts)
@@ -80,22 +75,13 @@ def single_shooting(N=5,N_sim=80, T=10):
     lb_u = -1.5 * np.ones((nu, 1))
     ub_u = 1.5 * np.ones((nu, 1))
 
-    #Xk = MX([np.pi / 4, np.pi / 4, 0])
-    #Xk = MX.sym(nx, N+1)
-    x_init = MX.sym('x_init', nx)
-    #Xk = x_init
-
-    #x_0 = opt_x['x', 0, 0] ####ENDRET SIST HER -> fiks start constraints
-    #g.append(x_0 - x_init)
-
     # optimization variables and NLP
     U = MX.sym("U", N * nu, 1)
     tk = MX.sym('tk', N)
+    x_init = MX.sym('x_init', nx)
 
     J = 0
     u0 = []
-    lb_X = []  # lower bound for X.
-    ub_X = []  # upper bound for X
     lb_U = []  # lower bound for U
     ub_U = []  # upper bound for U
     g = []  # constraint expression g
@@ -104,8 +90,6 @@ def single_shooting(N=5,N_sim=80, T=10):
 
     for k in range(N):
 
-        #x_k = X[k * nx:(k + 1) * nx, :]
-        #x_k_next = X[(k + 1) * nx:(k + 2) * nx, :]
         u_k = U[k * nu:(k + 1) * nu, :]
         u0 += [0]
 
@@ -115,7 +99,7 @@ def single_shooting(N=5,N_sim=80, T=10):
         else:
             u_prev = U[(k-1) * nu:k * nu, :]
 
-        # # inequality constraints
+        # inequality constraints
         ineq = height_fcn(Xk)
         g.append(ineq)
         lb_g.append(hmin)
@@ -126,20 +110,14 @@ def single_shooting(N=5,N_sim=80, T=10):
         J = J + Fk['qf']
 
         # state constraints
-        #lb_g += [Xk[0]]
-        #g += [Xk[0]]
         g += [Xk]
         ub_g += [ub_x]
         lb_g += [lb_x]
 
-        #lb_X.append(lb_x)
-        #ub_X.append(ub_x)
         lb_U.append(lb_u)
         ub_U.append(ub_u)
 
     # Create an NLP solver
-    #Xk = reshape(Xk, nx*(N+1), 1)
-    #print(vertcat(tk, Xk).shape)
     lbx = vertcat(*lb_U)
     ubx = vertcat(*ub_U)
     x = vertcat(U)
@@ -147,13 +125,8 @@ def single_shooting(N=5,N_sim=80, T=10):
     lbg = vertcat(*lb_g)
     ubg = vertcat(*ub_g)
 
-    pr = vertcat(tk, x_init)
-    print(pr.shape)
     prob = {'f': J, 'x': x, 'g': g, 'p': vertcat(tk, x_init)}
     solver = nlpsol('solver', 'ipopt', prob)
-
-    # Set number of iterations
-    # N_sim = 10
 
     # Initialize result lists for states and inputs
     x_0 = np.array([np.pi / 4, np.pi / 4, 0]).reshape(nx, 1)
@@ -165,6 +138,7 @@ def single_shooting(N=5,N_sim=80, T=10):
     u_plot = []
     solve_times = []
 
+    # MPC main loop
     for i in range(N_sim):
         start_time = datetime.now().timestamp()
         if i == 0:
@@ -197,19 +171,6 @@ def single_shooting(N=5,N_sim=80, T=10):
 
     costs = np.concatenate(costs, axis=1)
     solve_times = np.reshape(solve_times, (-1, 1))
-
-    # fig, ax = plt.subplots(2, 1, figsize=(10, 6))
-    #
-    # # plot the states
-    # ax[0].plot(res_x_mpc.T)
-    # ax[1].plot(res_u_mpc.T)
-    #
-    # # Set labels
-    # ax[0].set_ylabel('states')
-    # ax[1].set_ylabel('inputs')
-    # ax[1].set_xlabel('time')
-    # plt.show()
-    #np.vstack(u_plot), F,
 
     return res_x_mpc, res_u_mpc, costs, solve_times
 
