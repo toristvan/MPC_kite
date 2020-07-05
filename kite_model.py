@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 # TODO Import here the discretization schemes later
 from implicit_euler import *
 from orthogonal_collocation import Orthogonal_collocation_MPC
+from single_shooting import single_shooting
 
 mpl.rcParams['font.size'] = 14
 
@@ -101,7 +102,7 @@ class World(object):
             self.va_fcn = Function('va_fcn', [self.x, self.t], [self.va])
             self.PD = self.rho*(self.v0_fcn(self.t)**2)/2
             self.PD_fcn = Function('PD_fcn', [self.t], [self.PD])
-            self.TF = self.PD_fcn(self.t)*kite.A*(cos(self.x[0])**2)*(self.E_fcn(self.u) + 1)*np.sqrt(self.E_fcn(self.u)**2 + 1)*(cos(self.x[0])*cos(self.beta) + sin(self.x[0])*sin(self.beta)*sin(self.x[1]))
+            self.TF = self.PD_fcn(self.t)*kite.A*(cos(self.x[0])**2)*(self.E_fcn(self.u) + 1)*sqrt(self.E_fcn(self.u)**2 + 1)*(cos(self.x[0])*cos(self.beta) + sin(self.x[0])*sin(self.beta)*sin(self.x[1]))
             self.tension = Function('tension', [self.x,self.u,self.t], [self.TF])
             
             self.xdot = vertcat((self.va_fcn(self.x, self.t)/kite.L)*(cos(self.x[2]) - tan(self.x[0])/self.E_fcn(self.u)), 
@@ -156,8 +157,7 @@ class World(object):
             #implicit_euler_discretization()
             pass
         elif discretization == 'single_shooting':
-            #single_shooting_discretization()
-            pass
+            return single_shooting()
         else :
             raise NameError('wrong discretization name')       
         
@@ -318,8 +318,9 @@ world.print_states(x_sim)
 # run real MPC problem
 #world.run_mpc(kite, physics, x_0, discretization='implicit_euler')
 #world.run_MPC(kite, physics, x_0, discretization='orthogonal_collocation')
+
 kite2 = world.Kite(theta=np.pi/4, phi = np.pi/4, psi = 0)
-x, u, cost, time = world.run_MPC(discretization='orthogonal_collocation')
+x, u, cost, time = world.run_MPC(discretization='single_shooting')
 world.plot_kite_trajectory_from_states(kite2, x=x)
 
 
