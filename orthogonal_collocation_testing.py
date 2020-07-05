@@ -472,8 +472,8 @@ def test_orth_col(dt = 0.2, Kmin=3, Kmax=6, Nmin=30, Nmax=60, N_sim=200):
     ax[1][3].set_title("Control input with least fluctuating cost")
     ax[1][3].set_ylabel("Input [N]")
     ax[1][3].set_xlabel('time['+str(dt)+'sec]')
-    ax[1][3].legend()
 
+    ax[1][3].legend()
     ax[2][3].set_title("Maximum deviation from min cost to max cost")
     ax[2][3].set_ylabel("cost")
     ax[2][3].legend()
