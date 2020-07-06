@@ -35,6 +35,10 @@ def implicit_euler(N = 500, T=400, euler="implicit"):
     u = SX.sym("u", nu, 1)
     u_old = SX.sym("u_old", nu, 1)
     t = SX.sym("t")
+
+    costs=[]
+    sol_times=[]
+
     
     #Equations
     v0 = vm + vA*sin(2*np.pi*vf*t + voff)
@@ -159,6 +163,8 @@ def implicit_euler(N = 500, T=400, euler="implicit"):
     solve_time = datetime.now().timestamp() - start_time
     cost = res['f']
     print("\ncost: {}\nsolve time: {}\n".format(cost, solve_time))
+    sol_times.append(solve_time)
+    costs.append(cost)
 
     # extract the solution
     for k in range(N):
@@ -169,6 +175,6 @@ def implicit_euler(N = 500, T=400, euler="implicit"):
         x_init += dt*f(x_init.T, mpc_u[k,:].T, t[k]) # simulation
         mpc_sim[k+1,:] = x_init.T
 
-    return mpc_x.T, mpc_u, cost, solve_time
+    return mpc_x.T, mpc_u, costs, sol_times
 
 

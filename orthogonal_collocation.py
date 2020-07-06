@@ -44,7 +44,7 @@ def LgrInter(tau_col, tau, xk):
     return xk_i
 
 
-def Orthogonal_collocation_MPC(K=3, N=50, N_sim=200, dt=0.2, nx=3, nu=1, E0=5, vm=10, vA=0.5, vf=0.1, voff=np.pi, c=0.028, beta=0, rho=1, L=300, A=160, hmin=100, collocation_tech='legendre'):
+def Orthogonal_collocation_MPC(K=5, N=70, N_sim=200, dt=0.2, nx=3, nu=1, E0=5, vm=10, vA=0.5, vf=0.1, voff=np.pi, c=0.028, beta=0, rho=1, L=300, A=160, hmin=100, collocation_tech='legendre'):
     x = SX.sym("x", nx, 1)
     u = SX.sym("u", nu, 1)
     u_old = SX.sym("u_old", nu, 1)
@@ -215,7 +215,7 @@ def Orthogonal_collocation_MPC(K=3, N=50, N_sim=200, dt=0.2, nx=3, nu=1, E0=5, v
     res_u_mpc = []
     costs =[]
     solve_times = []
-    predicitons = []
+    #predictions = []
 
     for i in range(N_sim):
         start_time = datetime.now().timestamp()
@@ -238,7 +238,7 @@ def Orthogonal_collocation_MPC(K=3, N=50, N_sim=200, dt=0.2, nx=3, nu=1, E0=5, v
         u_k = opt_x_k['u',0]
         
         # Extract prediction
-        predictions.append(opt_x_k['x'])
+        #predictions.append(opt_x_k['x'])
 
         # simulate the system
         res_integrator = ode_solver(x0=x_0, p=vertcat(u_k, t_k[i]))
@@ -262,7 +262,7 @@ def Orthogonal_collocation_MPC(K=3, N=50, N_sim=200, dt=0.2, nx=3, nu=1, E0=5, v
     #solve_times = np.concatenate(solve_times, axis=1)
     #cost_mean = np.mean(costs)
 
-    return res_x_mpc, res_u_mpc, costs, solve_times, predicitons
+    return res_x_mpc, res_u_mpc, costs, solve_times
 
 '''
 fig, ax = plt.subplots(3,3, figsize=(15,12))
