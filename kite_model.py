@@ -326,7 +326,9 @@ world.plot_kite_trajectory_from_states(kite2, x=x_ss)
 #world.plot_kite_trajectory_from_states(kite2, x=x_oc)
 #world.plot_kite_trajectory_from_states(kite2, x=x_ie)
 
-
+with open(file="Plots/metadata/x_ss_shape.txt", mode="w") as ofile:
+    for line in x_ss:
+        ofile.write(" ".join(line)+"\n")
 
 
 
