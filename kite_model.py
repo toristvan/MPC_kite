@@ -320,8 +320,11 @@ world.print_states(x_sim)
 #world.run_MPC(kite, physics, x_0, discretization='orthogonal_collocation')
 
 kite2 = world.Kite(theta=np.pi/4, phi = np.pi/4, psi = 0)
-x, u, cost, time = world.run_MPC(discretization='single_shooting')
-world.plot_kite_trajectory_from_states(kite2, x=x)
+x_ss, u_ss, cost_ss, time_ss = world.run_MPC(discretization='single_shooting')
+#x_oc, u_oc, cost_oc, time_oc = world.run_MPC(discretization='orthogonal_collocation')
+world.plot_kite_trajectory_from_states(kite2, x=x_ss)
+#world.plot_kite_trajectory_from_states(kite2, x=x_oc)
+
 
 
 

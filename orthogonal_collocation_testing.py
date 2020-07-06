@@ -286,7 +286,7 @@ for K in range(2,6):
             costs = np.concatenate(costs, axis=1)
 
 
-def test_orth_col(dt = 0.2, Kmin=3, Kmax=6, Nmin=30, Nmax=60, N_sim=200):
+def test_orth_col(dt = 0.2, Kmin=3, Kmax=3, Nmin=20, Nmax=20, N_sim=100, point_type='legendre', figname = 'orth_coll_all'):
 
     #For record keeping.
     min_avg_cost = 0
@@ -319,8 +319,12 @@ def test_orth_col(dt = 0.2, Kmin=3, Kmax=6, Nmin=30, Nmax=60, N_sim=200):
     for K in range(Kmin,Kmax+1):
         #dt = dt*faktor
         # collocation points
-        tau_cols = [collocation_points(K, 'radau')]
-        tau_cols.append(collocation_points(K, 'legendre'))
+        tau_cols=[]
+        if point_type == 'both':
+            tau_cols = [collocation_points(K, 'radau')]
+            tau_cols.append(collocation_points(K, 'legendre'))
+        elif point_type == 'legendre' or point_type == 'radau':
+            tau_cols = [collocation_points(K, point_type)]
         #tau_col = collocation_points(K, 'radau')
         #tau_col = collocation_points(K, 'legendre')
         for tc in range (len(tau_cols)):
@@ -399,8 +403,8 @@ def test_orth_col(dt = 0.2, Kmin=3, Kmax=6, Nmin=30, Nmax=60, N_sim=200):
                 axk[1][2].plot(solve_times)
                 axk[1][2].set_xlabel('number of runs')
                 axk[1][2].set_xlabel('time spent on runs [s]')
-                axk[1][2].axhline(tsol_mean, label='mean runtime', color='k')
-                axk[1][2].axhline(tsol_max, label='max runtime', color='r')
+                axk[1][2].axhline(tsol_mean, label='mean runtime: ' + str('{0:.3g}'.format(tsol_mean)) + 's', color='k')
+                axk[1][2].axhline(tsol_max, label='max runtime: ' + str('{0:.3g}'.format(tsol_max)) + 's', color='r')
                 axk[1][2].legend()
 
                 color_index+=1
@@ -446,12 +450,14 @@ def test_orth_col(dt = 0.2, Kmin=3, Kmax=6, Nmin=30, Nmax=60, N_sim=200):
     ax[0][2].set_title("Trajectory with lowest avg cost")
     ax[0][2].set_xlabel("Horizontal position")
     ax[0][2].set_ylabel("Height")
-    ax[0][2].legend()
+    ax[0][2].set_ylim(90, 220)
+    ax[0][2].legend(loc='upper center')
 
     ax[1][2].set_title("Control input with lowest avg cost")
     ax[1][2].set_ylabel("Input [N]")
     ax[1][2].set_xlabel('time['+str(dt)+'sec]')
-    ax[1][2].legend()
+    ax[1][2].set_ylim(-12, 12)
+    ax[1][2].legend(loc='upper center')
 
 
     ax[2][2].set_title("Lowest avg cost")
@@ -467,20 +473,25 @@ def test_orth_col(dt = 0.2, Kmin=3, Kmax=6, Nmin=30, Nmax=60, N_sim=200):
     ax[0][3].set_title("Trajectory with least fluctuating cost")
     ax[0][3].set_xlabel("Horizontal position")
     ax[0][3].set_ylabel("Height")
-    ax[0][3].legend()
+    ax[0][3].set_ylim(90, 220)
+    ax[0][3].legend(loc='upper center')
 
     ax[1][3].set_title("Control input with least fluctuating cost")
     ax[1][3].set_ylabel("Input [N]")
     ax[1][3].set_xlabel('time['+str(dt)+'sec]')
+    ax[1][3].set_ylim(-12, 12)
+    ax[1][3].legend(loc='upper center')
 
-    ax[1][3].legend()
     ax[2][3].set_title("Maximum deviation from min cost to max cost")
     ax[2][3].set_ylabel("cost")
     ax[2][3].legend()
     
 
-    fig.savefig("Plots/png/orth_col_all_dt="+str(dt)+".png")
-    fig.savefig("Plots/eps/orth_col_all_dt="+str(dt)+".eps")
+    #fig.savefig("Plots/png/orth_col_opt_cost_dt="+str(dt)+".png")
+    #fig.savefig("Plots/eps/orth_col_opt_dt="+str(dt)+".eps")
+
+    fig.savefig("Plots/png/"+figname+".png")
+    fig.savefig("Plots/eps/"+figname+".eps")
 
     ax[0][2].legend()
     ax[1][2].legend()
@@ -489,9 +500,11 @@ def test_orth_col(dt = 0.2, Kmin=3, Kmax=6, Nmin=30, Nmax=60, N_sim=200):
     ax[1][3].legend()
     ax[2][3].legend()
 
-    fig.savefig("Plots/png/orth_col_all_dt="+str(dt)+".png")
-    fig.savefig("Plots/eps/orth_col_all_dt="+str(dt)+".eps")
-    
+    #fig.savefig("Plots/png/orth_col_all_dt="+str(dt)+".png")
+    #fig.savefig("Plots/eps/orth_col_all_dt="+str(dt)+".eps")
+    fig.savefig("Plots/png/"+figname+".png")
+    fig.savefig("Plots/eps/"+figname+".eps")
 
+    
 
     #plt.show()

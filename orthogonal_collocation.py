@@ -203,7 +203,8 @@ def Orthogonal_collocation_MPC(K=3, N=50, N_sim=200, dt=0.2, nx=3, nu=1, E0=5, v
     ub_g = vertcat(*ub_g)
 
     prob = {'f':J,'x':vertcat(opt_x),'g':g, 'p':vertcat(x_init, time)}
-    mpc_solver = nlpsol('solver','ipopt',prob)
+    opts s= {'print_out': False, 'print_time': False}
+    mpc_solver = nlpsol('solver','ipopt',prob, opts)
 
     # MPC Main loop
 
