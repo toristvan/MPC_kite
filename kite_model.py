@@ -16,7 +16,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 
 # TODO Import here the discretization schemes later
-from implicit_euler import *
+from implicit_euler import implicit_euler
 from orthogonal_collocation import Orthogonal_collocation_MPC
 from single_shooting import single_shooting
 
@@ -150,12 +150,11 @@ class World(object):
     def run_MPC(self, discretization='implicit_euler'):
 
         if discretization == 'orthogonal_collocation':
-            #orthogonal_collocation_discretization()
             return Orthogonal_collocation_MPC()
-            pass
         elif discretization == 'implicit_euler':
-            #implicit_euler_discretization()
-            pass
+            return implicit_euler(euler="implicit")
+        elif discretization == 'explicit_euler':
+            return implicit_euler(euler="explicit")
         elif discretization == 'single_shooting':
             return single_shooting()
         else :
@@ -312,15 +311,19 @@ world.plot_given_trajectory(kite, x_8)
 nu = 1
 u_k = np.array([[0]]).reshape(nu,1)
 
-x_sim = world.simulate(kite, physics, u_k, 2)
-world.print_states(x_sim)
+#x_sim = world.simulate(kite, physics, u_k, 2)
+#world.print_states(x_sim)
 
 # run real MPC problem
 #world.run_mpc(kite, physics, x_0, discretization='implicit_euler')
 #world.run_MPC(kite, physics, x_0, discretization='orthogonal_collocation')
 
 kite2 = world.Kite(theta=np.pi/4, phi = np.pi/4, psi = 0)
-x, u, cost, time = world.run_MPC(discretization='single_shooting')
+#x, u, cost, time = world.run_MPC(discretization='single_shooting')
+#x, u, cost, time = world.run_MPC(discretization='orthogonal_collocation')
+#x, u, cost, time = world.run_MPC(discretization='explicit_euler')
+x, u, cost, time = world.run_MPC(discretization='implicit_euler')
+
 world.plot_kite_trajectory_from_states(kite2, x=x)
 
 
