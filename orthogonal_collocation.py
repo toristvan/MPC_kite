@@ -214,6 +214,7 @@ def Orthogonal_collocation_MPC(K=5, N=70, N_sim=200, dt=0.2, nx=3, nu=1, E0=5, v
     res_x_mpc = [x_0]
     res_u_mpc = []
     costs =[]
+    predicted_total_costs=[]
     solve_times = []
     #predictions = []
 
@@ -229,9 +230,10 @@ def Orthogonal_collocation_MPC(K=5, N=70, N_sim=200, dt=0.2, nx=3, nu=1, E0=5, v
 
         
         solve_times.append([datetime.now().timestamp() - start_time])
-        #extract cost
-        cost_k = mpc_res['f']
-        costs.append(cost_k)
+        #extract predicted total cost
+        predicted_total_cost_k = mpc_res['f']
+        predicted_total_costs.append(predicted_total_cost_k)
+        
 
         # Extract the control input
         opt_x_k = opt_x(mpc_res['x'])
@@ -246,7 +248,15 @@ def Orthogonal_collocation_MPC(K=5, N=70, N_sim=200, dt=0.2, nx=3, nu=1, E0=5, v
         
         # Update the initial state
         x_0 = x_next
-        
+
+        #extract cost for stage
+        if i == 0:
+            cost_k = stage_cost_fcn(x_next, u_k, t_k[i+1], 0)
+        else:
+            cost_k = stage_cost_fcn(x_next, u_k, t_k[i+1], u_prev)
+        costs.append(cost_k)
+        u_prev = u_k
+
         # Store the results
         res_x_mpc.append(x_next)
         res_u_mpc.append(u_k)

@@ -43,6 +43,9 @@ def main():
     ax[2][0].axhline(tsol_mean, label='mean runtime: ' + str('{0:.3g}'.format(tsol_mean)) + 's', color='k')
     ax[2][0].axhline(tsol_max, label='max runtime: ' + str('{0:.3g}'.format(tsol_max)) + 's', color='r')
     ax[2][0].legend()
+
+    ax[0][1].plot(costs.T)
+    ax[0][1].axhline(np.mean(costs))
     
     plt.show()
 
