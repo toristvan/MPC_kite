@@ -32,7 +32,7 @@ time = [time_ss, time_oc, time_ie]
 
 #fix
 dts = [2, 0.2, 0.2]
-N_sims = [80, 200, 200]
+N_sims = [80, 200, 1000]
 
 plotcolors = []
 for color in mcd.XKCD_COLORS:
@@ -56,7 +56,7 @@ ax[1][0].set_title("Control input")
 ax[1][0].set_xlabel("Time") #figure out format
 ax[1][0].set_ylabel("Force [N]")
 #ax[0][0].set_xticks(np.linspace(0, int(N_sims[0]*dts[0])), int(N_sims[0]*dts[0]))
-ax[1][0].get_xaxis().set_major_formatter(tck.FuncFormatter(lambda x, p: format(int(x*dts[0]), ',')))
+ax[1][0].get_xaxis().set_major_formatter(tck.FuncFormatter(lambda x, p: format(int(x*dts[1]), ',')))
 
 
 
@@ -94,11 +94,22 @@ for i in range(3):
     axk[1][0].set_ylabel("Force [N]")
     #axk[1][0].set_xticks(np.linspace(0, int(N_sims[i]*dts[i])), int(N_sims[i]*dts[i]))
     axk[1][0].get_xaxis().set_major_formatter(tck.FuncFormatter(lambda x, p: format(int(x*dts[i]), ',')))
-
-    ax[1][0].plot(u[i].T, label = methods[i], color = plotcolors[i*color_factor])
+    
+    #For when ss has larger dt
+    scaled_u = []
+    if i == 0:
+        for inp in u[i]:
+            for j in range(5):
+                scaled_u.append(inp)
+        scaled_u = np.array(scaled_u)
+        ax[1][0].plot(scaled_u.T, label = methods[i], color = plotcolors[i*color_factor])
+    else:
+        ax[1][0].plot(u[i].T, label = methods[i], color = plotcolors[i*color_factor])
 
     #cost
     cost_mean = np.mean(cost[i])
+    if i == 2:
+        cost_mean = cost_mean/N_sims[i]
     
     axk[0][1].plot(cost[i].T)
     axk[0][1].axhline(cost_mean, label = "Mean cost", color = plotcolors[i*color_factor])

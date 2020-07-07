@@ -1,4 +1,4 @@
-shape: (3, 121)
+shape: (3, 161)
 N: 10
-Sampling time dt: 0.08333333333333333
-Prediction horizon (N*dt):0.8333333333333333
+Sampling time dt: 1.0
+Prediction horizon (N*dt):10.0

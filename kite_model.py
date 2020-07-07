@@ -24,10 +24,10 @@ from single_shooting import single_shooting
 mpl.rcParams['font.size'] = 14
 
 #Simulation parameters:
-N_sim_ss = 120
+N_sim_ss = 160
 N_ss = 10
 T_ss = 10
-dt_ss = T_ss/N_sim_ss #2
+dt_ss = T_ss/N_ss #1
 
 N_sim_oc = 200
 N_oc = 70
@@ -35,10 +35,10 @@ K_oc = 5
 dt_oc = 0.2
 T_oc = N_sim_oc*dt_oc #40
 
-N_sim_ie = 200
+N_sim_ie = 1000
 N_ie = 50
 T_ie = 40
-dt_ie = T_ie/N_ie
+dt_ie = 0.2
 
 class World(object):
     
@@ -170,9 +170,9 @@ class World(object):
         if discretization == 'orthogonal_collocation':
             return Orthogonal_collocation_MPC(K=K_oc, N=N_oc, N_sim=N_sim_oc, dt=dt_oc)
         elif discretization == 'implicit_euler':
-            #return implicit_euler(N=N_ie,T= T_ie, euler="implicit")
-            return simulation(N_sim=N_sim_ie, euler="implicit")
-            #return simulation(euler="implicit")
+            return implicit_euler(N_sim=N_sim_ie, N=N_ie,dt = dt_ie, euler="implicit")
+            #return implicit_euler(euler="implicit")
+            #return simulation(N_sim=N_sim_ie, euler="implicit")
         elif discretization == 'explicit_euler':
             return implicit_euler(euler="explicit")
         elif discretization == 'single_shooting':
