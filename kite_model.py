@@ -23,9 +23,9 @@ from single_shooting import single_shooting
 mpl.rcParams['font.size'] = 14
 
 #Simulation parameters:
-N_sim_ss = 80
+N_sim_ss = 20
 N_ss = 5
-T_ss = 40
+T_ss = 10
 dt_ss = T_ss/N_sim_ss #2
 
 N_sim_oc = 200
@@ -335,13 +335,16 @@ u_k = np.array([[0]]).reshape(nu,1)
 #world.run_mpc(kite, physics, x_0, discretization='implicit_euler')
 #world.run_MPC(kite, physics, x_0, discretization='orthogonal_collocation')
 
-kite2 = world.Kite(theta=np.pi/4, phi = np.pi/4, psi = 0)
+kite_ss = world.Kite(theta=np.pi/4, phi = np.pi/4, psi = 0)
+kite_oc = world.Kite(theta=np.pi/4, phi = np.pi/4, psi = 0)
+kite_ie = world.Kite(theta=np.pi/4, phi = np.pi/4, psi = 0)
+
 x_ss, u_ss, cost_ss, time_ss = world.run_MPC(discretization='single_shooting')
 x_oc, u_oc, cost_oc, time_oc = world.run_MPC(discretization='orthogonal_collocation')
 #x_ie, u_ie, cost_ie, time_ie = world.run_MPC(discretization='implicit_euler')
-fig_ss = world.plot_kite_trajectory_from_states(kite2, x=x_ss)
-fig_oc = world.plot_kite_trajectory_from_states(kite2, x=x_oc)
-#fig_ie = world.plot_kite_trajectory_from_states(kite2, x=x_ie)
+fig_ss = world.plot_kite_trajectory_from_states(kite_ss, x=x_ss)
+fig_oc = world.plot_kite_trajectory_from_states(kite_oc, x=x_oc)
+#fig_ie = world.plot_kite_trajectory_from_states(kite_ie, x=x_ie)
 fig_ss.savefig("Plots/present/3d/single_shooting.png")
 fig_ss.savefig("Plots/present/3d/single_shooting.eps")
 fig_oc.savefig("Plots/present/3d/orthogonal_collocation.png")

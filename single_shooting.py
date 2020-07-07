@@ -7,7 +7,7 @@ from casadi.tools import *
 
 def single_shooting(N=5,N_sim=80, T=10):
 
-    dt = T/N_sim
+    dt = T/N
 
     # System Parameters
     E0 = 5  # MX.sym("E0")
@@ -126,7 +126,8 @@ def single_shooting(N=5,N_sim=80, T=10):
     ubg = vertcat(*ub_g)
 
     prob = {'f': J, 'x': x, 'g': g, 'p': vertcat(tk, x_init)}
-    solver = nlpsol('solver', 'ipopt', prob)
+    ipopt_opts = {'ipopt': {'print_level': 0}}
+    solver = nlpsol('solver', 'ipopt', prob, ipopt_opts)
 
     # Initialize result lists for states and inputs
     x_0 = np.array([np.pi / 4, np.pi / 4, 0]).reshape(nx, 1)
