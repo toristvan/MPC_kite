@@ -32,7 +32,7 @@ time = [time_ss, time_oc, time_ie]
 
 #fix
 dts = [2, 0.2, 0.2]
-N_sims = [20, 200, 200]
+N_sims = [80, 200, 200]
 
 plotcolors = []
 for color in mcd.XKCD_COLORS:

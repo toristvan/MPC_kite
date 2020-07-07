@@ -135,6 +135,7 @@ def single_shooting(N=5,N_sim=80, T=10):
     res_x_mpc = [x_0]
     res_u_mpc = []
     costs = []
+    predicted_total_costs =[]
     u_curr = []
     u_plot = []
     solve_times = []
@@ -153,8 +154,8 @@ def single_shooting(N=5,N_sim=80, T=10):
         u_plot.append(u_k)
 
         # append cost
-        cost_k = sol['f']
-        costs.append(cost_k)
+        predicted_total_cost_k = sol['f']
+        predicted_total_costs.append(predicted_total_cost_k)
 
         # simulate the system
         res_integrator = ode_solver(x0=x_0, p=vertcat(u_k, t_k[i]))
@@ -162,6 +163,14 @@ def single_shooting(N=5,N_sim=80, T=10):
 
         # Update the initial state
         x_0 = x_next
+
+        #extract cost for stage
+        if i == 0:
+            cost_k = stage_cost_fcn(x_next, u_k, t_k[i+1], 0)
+        else:
+            cost_k = stage_cost_fcn(x_next, u_k, t_k[i+1], u_prev)
+        costs.append(cost_k)
+        u_prev = u_k
 
         # Store the results
         res_x_mpc.append(x_next)
