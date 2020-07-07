@@ -203,8 +203,9 @@ def Orthogonal_collocation_MPC(K=5, N=70, N_sim=200, dt=0.2, nx=3, nu=1, E0=5, v
     ub_g = vertcat(*ub_g)
 
     prob = {'f':J,'x':vertcat(opt_x),'g':g, 'p':vertcat(x_init, time)}
-    opts = {'print_out': False, 'print_time': False}
-    mpc_solver = nlpsol('solver','ipopt',prob, opts)
+    #lower amount of printing for increased runtime
+    ipopt_opts = {'ipopt': {'print_level': 0}}
+    mpc_solver = nlpsol('solver','ipopt',prob, ipopt_opts)
 
     # MPC Main loop
 
@@ -219,20 +220,23 @@ def Orthogonal_collocation_MPC(K=5, N=70, N_sim=200, dt=0.2, nx=3, nu=1, E0=5, v
     #predictions = []
 
     for i in range(N_sim):
-        start_time = datetime.now().timestamp()
         # solve optimization problem
         if i == 0:
+            start_time = datetime.now().timestamp()
             mpc_res = mpc_solver(p=vertcat(x_0, t_k[i:N+i]), lbg=lb_g, ubg=ub_g, lbx = lb_opt_x, ubx = ub_opt_x)
+            solve_times.append([datetime.now().timestamp() - start_time])
+
             # optionally: Warmstart the optimizer by passing the previous solution as an initial guess!
         else:
             #mpc_res = mpc_solver(p=x_0, x0=opt_x_k, lbg=0, ubg=0, lbx = lb_opt_x, ubx = ub_opt_x)
+            start_time = datetime.now().timestamp()
             mpc_res = mpc_solver(p=vertcat(x_0, t_k[i:N+i]),x0=opt_x_k, lbg=lb_g, ubg=ub_g, lbx = lb_opt_x, ubx = ub_opt_x)
+            solve_times.append([datetime.now().timestamp() - start_time])
 
         
-        solve_times.append([datetime.now().timestamp() - start_time])
         #extract predicted total cost
-        predicted_total_cost_k = mpc_res['f']
-        predicted_total_costs.append(predicted_total_cost_k)
+        #predicted_total_cost_k = mpc_res['f']
+        #predicted_total_costs.append(predicted_total_cost_k)
         
 
         # Extract the control input
