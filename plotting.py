@@ -31,8 +31,8 @@ cost = [cost_ss, cost_oc, cost_ie]
 time = [time_ss, time_oc, time_ie]
 
 #fix
-dts = [0.2, 0.2, 0.2]
-N_sims = [200, 200, 200]
+dts = [2, 0.2, 0.2]
+N_sims = [20, 200, 200]
 
 plotcolors = []
 for color in mcd.XKCD_COLORS:
