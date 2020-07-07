@@ -23,8 +23,8 @@ from single_shooting import single_shooting
 mpl.rcParams['font.size'] = 14
 
 #Simulation parameters:
-N_sim_ss = 20
-N_ss = 20
+N_sim_ss = 80
+N_ss = 5
 T_ss = 40
 dt_ss = T_ss/N_sim_ss #2
 
@@ -338,16 +338,16 @@ u_k = np.array([[0]]).reshape(nu,1)
 kite2 = world.Kite(theta=np.pi/4, phi = np.pi/4, psi = 0)
 x_ss, u_ss, cost_ss, time_ss = world.run_MPC(discretization='single_shooting')
 x_oc, u_oc, cost_oc, time_oc = world.run_MPC(discretization='orthogonal_collocation')
-x_ie, u_ie, cost_ie, time_ie = world.run_MPC(discretization='implicit_euler')
+#x_ie, u_ie, cost_ie, time_ie = world.run_MPC(discretization='implicit_euler')
 fig_ss = world.plot_kite_trajectory_from_states(kite2, x=x_ss)
 fig_oc = world.plot_kite_trajectory_from_states(kite2, x=x_oc)
-fig_ie = world.plot_kite_trajectory_from_states(kite2, x=x_ie)
+#fig_ie = world.plot_kite_trajectory_from_states(kite2, x=x_ie)
 fig_ss.savefig("Plots/present/3d/single_shooting.png")
 fig_ss.savefig("Plots/present/3d/single_shooting.eps")
 fig_oc.savefig("Plots/present/3d/orthogonal_collocation.png")
 fig_oc.savefig("Plots/present/3d/orthogonal_collocation.eps")
-fig_ie.savefig("Plots/present/3d/implicit_euler.png")
-fig_ie.savefig("Plots/present/3d/implicit_euler.eps")
+#fig_ie.savefig("Plots/present/3d/implicit_euler.png")
+#fig_ie.savefig("Plots/present/3d/implicit_euler.eps")
 
 with open(file="Plots/metadata/x_ss_specs.dat", mode="w") as xss_shape_file:
     xss_shape_file.write("shape: " + str(np.shape(x_ss)) + "\n")
@@ -375,6 +375,7 @@ np.savetxt("Plots/metadata/u_oc_data.dat", u_oc)
 np.savetxt("Plots/metadata/cost_oc_data.dat", cost_oc)
 np.savetxt("Plots/metadata/time_oc_data.dat", time_oc)
 
+'''
 with open(file="Plots/metadata/x_ie_specs.dat", mode="w") as xie_shape_file:
     xie_shape_file.write("shape: " + str(np.shape(x_ie)))
     xie_shape_file.write("N: " + str(N_ie) + "\n")
@@ -386,3 +387,4 @@ np.savetxt("Plots/metadata/u_ie_data.dat", u_ie)
 np.savetxt("Plots/metadata/cost_ie_data.dat", cost_ie)
 np.savetxt("Plots/metadata/time_ie_data.dat", time_ie)
 
+'''

@@ -7,7 +7,7 @@ from casadi.tools import *
 
 def single_shooting(N=5,N_sim=80, T=10):
 
-    dt = T/N
+    dt = T/N_sim
 
     # System Parameters
     E0 = 5  # MX.sym("E0")
