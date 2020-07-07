@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib._color_data as mcd
 import math
+import matplotlib.ticker as tck
 from casadi import *
 
 L = 300
@@ -46,22 +47,28 @@ fig.suptitle("Comparison of single shooting, orthogonal collocation and implicit
 #position
 ax[0][0].set_xlabel("Horizontal [m]")
 ax[0][0].set_ylabel("Vertical [m]")
-ax[0][0].set_xticks(np.linspace(0, int(N_sims[0]*dts[0])), int(N_sims[0]*dts[0]))
+#ax[0][0].set_xticks(np.linspace(0, int(N_sims[0]*dts[0])), int(N_sims[0]*dts[0]))
+#ax[0][0].get_xaxis().set_major_formatter(tck.FuncFormatter(lambda x, p: format(int(x*dts[0]), ',')))
+
 
 #control input 
 ax[1][0].set_title("Control input")
 ax[1][0].set_xlabel("Time") #figure out format
 ax[1][0].set_ylabel("Force [N]")
-ax[0][0].set_xticks(np.linspace(0, int(N_sims[0]*dts[0])), int(N_sims[0]*dts[0]))
+#ax[0][0].set_xticks(np.linspace(0, int(N_sims[0]*dts[0])), int(N_sims[0]*dts[0]))
+ax[1][0].get_xaxis().set_major_formatter(tck.FuncFormatter(lambda x, p: format(int(x*dts[0]), ',')))
+
 
 
 #cost
 ax[0][1].set_title("Mean cost")
 ax[0][1].set_ylabel('Cost')
-
+ax[0][1].set_xticks([])
 #computation time
 ax[1][1].set_title("Mean runtime")
 ax[1][1].set_ylabel("Runtime [s]")
+ax[1][1].set_xticks([])
+
 
 
 for i in range(3):
@@ -73,7 +80,9 @@ for i in range(3):
     axk[0][0].set_title("Position of kite")
     axk[0][0].set_xlabel("Horizontal [m]")
     axk[0][0].set_ylabel("Vertical [m]")
-    axk[0][0].set_xticks(np.linspace(0, int(N_sims[i]*dts[i])), int(N_sims[i]*dts[i]))
+    #axk[0][0].set_xticks(np.linspace(0, int(N_sims[i]*dts[i])), int(N_sims[i]*dts[i]))
+    #axk[0][0].get_xaxis().set_major_formatter(tck.FuncFormatter(lambda x, p: format(int(x*dts[i]), ',')))
+
 
 
     ax[0][0].plot(L*sin(x[i][0].T)*sin(x[i][1].T), L*sin(x[i][0].T)*cos(x[i][1].T), label = methods[i], color = plotcolors[i*color_factor])
@@ -83,7 +92,8 @@ for i in range(3):
     axk[1][0].set_title("Control input")
     axk[1][0].set_xlabel("Time") #figure out format
     axk[1][0].set_ylabel("Force [N]")
-    axk[1][0].set_xticks(np.linspace(0, int(N_sims[i]*dts[i])), int(N_sims[i]*dts[i]))
+    #axk[1][0].set_xticks(np.linspace(0, int(N_sims[i]*dts[i])), int(N_sims[i]*dts[i]))
+    axk[1][0].get_xaxis().set_major_formatter(tck.FuncFormatter(lambda x, p: format(int(x*dts[i]), ',')))
 
     ax[1][0].plot(u[i].T, label = methods[i], color = plotcolors[i*color_factor])
 
@@ -95,7 +105,8 @@ for i in range(3):
     axk[0][1].set_xlabel('Time [s]')
     axk[0][1].set_ylabel('Cost')
     axk[0][1].set_title("Value of cost function")
-    axk[0][1].set_xticks(np.linspace(0, int(N_sims[i]*dts[i])), int(N_sims[i]*dts[i]))
+    #axk[0][1].set_xticks(np.linspace(0, int(N_sims[i]*dts[i])), int(N_sims[i]*dts[i]))
+    axk[0][1].get_xaxis().set_major_formatter(tck.FuncFormatter(lambda x, p: format(int(x*dts[i]), ',')))
 
     axk[0][1].legend()
 

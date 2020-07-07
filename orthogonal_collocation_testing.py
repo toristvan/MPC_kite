@@ -67,6 +67,8 @@ ode = {'x': x, 'ode': xdot, 'p': vertcat(u,t)}
 opts = {'tf': dt}
 ode_solver = integrator('F', 'idas', ode, opts)
 
+def get_solver():
+    return ode_solver
 
 ## Lagrange polynomials
 

@@ -23,16 +23,20 @@ from single_shooting import single_shooting
 mpl.rcParams['font.size'] = 14
 
 #Simulation parameters:
-N_sim = 200
-N_ss = 50
-dt_ss = 0.2
+N_sim_ss = 20
+N_ss = 20
+T_ss = 40
+dt_ss = T_ss/N_sim_ss #2
 
+N_sim_oc = 200
 N_oc = 70
 K_oc = 5
 dt_oc = 0.2
+T_oc = N_sim_oc*dt_oc #40
 
 N_ie = 50
-dt_ie = 0.2
+T_ie = 40
+dt_ie = T_ie/N_ie
 
 class World(object):
     
@@ -162,13 +166,13 @@ class World(object):
     def run_MPC(self, discretization='implicit_euler'):
 
         if discretization == 'orthogonal_collocation':
-            return Orthogonal_collocation_MPC(K=K_oc, N=N_oc, N_sim=N_sim, dt=dt_oc)
+            return Orthogonal_collocation_MPC(K=K_oc, N=N_oc, N_sim=N_sim_oc, dt=dt_oc)
         elif discretization == 'implicit_euler':
-            return implicit_euler(N=N_sim,T= N_sim*dt_ie, euler="implicit")
+            return implicit_euler(N=N_ie,T= T_ie, euler="implicit")
         elif discretization == 'explicit_euler':
             return implicit_euler(euler="explicit")
         elif discretization == 'single_shooting':
-            return single_shooting(N=N_ss,N_sim=N_sim, T=N_sim*dt_ss)
+            return single_shooting(N=N_ss,N_sim=N_sim_ss, T=T_ss)
         else :
             raise NameError('wrong discretization name')       
         
