@@ -1,0 +1,3 @@
+shape: (3, 201)N: 70
+Sampling time dt: 0.2
+Prediction horizon (N*dt):14.0

@@ -17,10 +17,28 @@ import matplotlib.pyplot as plt
 
 # TODO Import here the discretization schemes later
 from implicit_euler import implicit_euler
+from implicit_euler import simulation
 from orthogonal_collocation import Orthogonal_collocation_MPC
 from single_shooting import single_shooting
 
 mpl.rcParams['font.size'] = 14
+
+#Simulation parameters:
+N_sim_ss = 160
+N_ss = 10
+T_ss = 10
+dt_ss = T_ss/N_ss #1
+
+N_sim_oc = 200
+N_oc = 70
+K_oc = 5
+dt_oc = 0.2
+T_oc = N_sim_oc*dt_oc #40
+
+N_sim_ie = 1000
+N_ie = 50
+T_ie = 40
+dt_ie = 0.2
 
 class World(object):
     
@@ -150,13 +168,16 @@ class World(object):
     def run_MPC(self, discretization='implicit_euler'):
 
         if discretization == 'orthogonal_collocation':
-            return Orthogonal_collocation_MPC()
+            return Orthogonal_collocation_MPC(K=K_oc, N=N_oc, N_sim=N_sim_oc, dt=dt_oc)
         elif discretization == 'implicit_euler':
-            return implicit_euler(euler="implicit")
+            return implicit_euler(N_sim=N_sim_ie, N=N_ie,dt = dt_ie, euler="implicit")
+            #return implicit_euler(euler="implicit")
+            #return simulation(N_sim=N_sim_ie, euler="implicit")
         elif discretization == 'explicit_euler':
             return implicit_euler(euler="explicit")
         elif discretization == 'single_shooting':
-            return single_shooting()
+            return single_shooting(N=N_ss,N_sim=N_sim_ss, T=T_ss)
+            #return single_shooting()
         else :
             raise NameError('wrong discretization name')       
         
@@ -170,7 +191,7 @@ class World(object):
         for i in range(N): 
             kite.update_trajectory(x[0,i], x[1,i], x[2,i])
 
-        self.plot(kite, np.asarray(kite.trajectory).T)
+        return self.plot(kite, np.asarray(kite.trajectory).T)
         
     def plot_given_trajectory(self, kite, x):
     
@@ -287,6 +308,7 @@ class World(object):
         ax.grid(False)
         ax.set_zlim3d(0, -600)
         plt.show()
+        return fig
     
         
 
@@ -301,11 +323,11 @@ physics = world.Physics(kite)
 # test trajectory plot with some example states calculated by test_states2()
 kite2 = world.Kite(theta=0, phi=0, psi=0)
 x_test = world.test_states2(100)
-world.plot_kite_trajectory_from_states(kite2, x_test)
+#world.plot_kite_trajectory_from_states(kite2, x_test)
 
 # plot 8 trajectory as an example
 x_8 = world.spherical_8_trajectory(kite, 100)
-world.plot_given_trajectory(kite, x_8)
+#world.plot_given_trajectory(kite, x_8)
 
 # run simulation
 nu = 1
@@ -318,14 +340,58 @@ u_k = np.array([[0]]).reshape(nu,1)
 #world.run_mpc(kite, physics, x_0, discretization='implicit_euler')
 #world.run_MPC(kite, physics, x_0, discretization='orthogonal_collocation')
 
-kite2 = world.Kite(theta=np.pi/4, phi = np.pi/4, psi = 0)
-#x, u, cost, time = world.run_MPC(discretization='single_shooting')
-#x, u, cost, time = world.run_MPC(discretization='orthogonal_collocation')
-#x, u, cost, time = world.run_MPC(discretization='explicit_euler')
-x, u, cost, time = world.run_MPC(discretization='implicit_euler')
+kite_ss = world.Kite(theta=np.pi/4, phi = np.pi/4, psi = 0)
+kite_oc = world.Kite(theta=np.pi/4, phi = np.pi/4, psi = 0)
+kite_ie = world.Kite(theta=np.pi/4, phi = np.pi/4, psi = 0)
 
-world.plot_kite_trajectory_from_states(kite2, x=x)
+x_ss, u_ss, cost_ss, time_ss = world.run_MPC(discretization='single_shooting')
+x_oc, u_oc, cost_oc, time_oc = world.run_MPC(discretization='orthogonal_collocation')
+x_ie, u_ie, cost_ie, time_ie, preds = world.run_MPC(discretization='implicit_euler')
+fig_ss = world.plot_kite_trajectory_from_states(kite_ss, x=x_ss)
+fig_oc = world.plot_kite_trajectory_from_states(kite_oc, x=x_oc)
+fig_ie = world.plot_kite_trajectory_from_states(kite_ie, x=x_ie)
+fig_ss.savefig("Plots/present/3d/single_shooting.png")
+fig_ss.savefig("Plots/present/3d/single_shooting.eps")
+fig_oc.savefig("Plots/present/3d/orthogonal_collocation.png")
+fig_oc.savefig("Plots/present/3d/orthogonal_collocation.eps")
+fig_ie.savefig("Plots/present/3d/implicit_euler.png")
+fig_ie.savefig("Plots/present/3d/implicit_euler.eps")
+
+with open(file="Plots/metadata/x_ss_specs.dat", mode="w") as xss_shape_file:
+    xss_shape_file.write("shape: " + str(np.shape(x_ss)) + "\n")
+    xss_shape_file.write("N: " + str(N_ss) + "\n")
+    xss_shape_file.write("Sampling time dt: " + str(dt_ss) + "\n")
+    xss_shape_file.write("Prediction horizon (N*dt):" + str(N_ss*dt_ss))
 
 
 
+np.savetxt("Plots/metadata/x_ss_data.dat", x_ss)
+np.savetxt("Plots/metadata/u_ss_data.dat", u_ss)
+np.savetxt("Plots/metadata/cost_ss_data.dat", cost_ss)
+np.savetxt("Plots/metadata/time_ss_data.dat", time_ss)
+
+
+with open(file="Plots/metadata/x_oc_specs.dat", mode="w") as xoc_shape_file:
+    xoc_shape_file.write("shape: " + str(np.shape(x_oc)))
+    xoc_shape_file.write("N: " + str(N_oc) + "\n")
+    xoc_shape_file.write("Sampling time dt: " + str(dt_oc) + "\n")
+    xoc_shape_file.write("Prediction horizon (N*dt):" + str(N_oc*dt_oc))
+
+
+np.savetxt("Plots/metadata/x_oc_data.dat", x_oc)
+np.savetxt("Plots/metadata/u_oc_data.dat", u_oc)
+np.savetxt("Plots/metadata/cost_oc_data.dat", cost_oc)
+np.savetxt("Plots/metadata/time_oc_data.dat", time_oc)
+
+
+with open(file="Plots/metadata/x_ie_specs.dat", mode="w") as xie_shape_file:
+    xie_shape_file.write("shape: " + str(np.shape(x_ie)))
+    xie_shape_file.write("N: " + str(N_ie) + "\n")
+    xie_shape_file.write("Sampling time dt: " + str(dt_ie) + "\n")
+    xie_shape_file.write("Prediction horizon (N*dt):" + str(N_ie*dt_ie))
+
+np.savetxt("Plots/metadata/x_ie_data.dat", x_ie)
+np.savetxt("Plots/metadata/u_ie_data.dat", u_ie)
+np.savetxt("Plots/metadata/cost_ie_data.dat", cost_ie)
+np.savetxt("Plots/metadata/time_ie_data.dat", time_ie)
 

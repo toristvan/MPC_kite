@@ -44,7 +44,7 @@ def LgrInter(tau_col, tau, xk):
     return xk_i
 
 
-def Orthogonal_collocation_MPC(K=3, N=50, N_sim=200, dt=0.2, nx=3, nu=1, E0=5, vm=10, vA=0.5, vf=0.1, voff=np.pi, c=0.028, beta=0, rho=1, L=300, A=160, hmin=100, collocation_tech='legendre'):
+def Orthogonal_collocation_MPC(K=5, N=70, N_sim=200, dt=0.2, nx=3, nu=1, E0=5, vm=10, vA=0.5, vf=0.1, voff=np.pi, c=0.028, beta=0, rho=1, L=300, A=160, hmin=100, collocation_tech='legendre'):
     x = SX.sym("x", nx, 1)
     u = SX.sym("u", nu, 1)
     u_old = SX.sym("u_old", nu, 1)
@@ -203,7 +203,9 @@ def Orthogonal_collocation_MPC(K=3, N=50, N_sim=200, dt=0.2, nx=3, nu=1, E0=5, v
     ub_g = vertcat(*ub_g)
 
     prob = {'f':J,'x':vertcat(opt_x),'g':g, 'p':vertcat(x_init, time)}
-    mpc_solver = nlpsol('solver','ipopt',prob)
+    #lower amount of printing for increased runtime
+    ipopt_opts = {'ipopt': {'print_level': 0}}
+    mpc_solver = nlpsol('solver','ipopt',prob, ipopt_opts)
 
     # MPC Main loop
 
@@ -213,27 +215,36 @@ def Orthogonal_collocation_MPC(K=3, N=50, N_sim=200, dt=0.2, nx=3, nu=1, E0=5, v
     res_x_mpc = [x_0]
     res_u_mpc = []
     costs =[]
+    predicted_total_costs=[]
     solve_times = []
+    #predictions = []
 
     for i in range(N_sim):
-        start_time = datetime.now().timestamp()
         # solve optimization problem
         if i == 0:
+            start_time = datetime.now().timestamp()
             mpc_res = mpc_solver(p=vertcat(x_0, t_k[i:N+i]), lbg=lb_g, ubg=ub_g, lbx = lb_opt_x, ubx = ub_opt_x)
+            solve_times.append([datetime.now().timestamp() - start_time])
+
             # optionally: Warmstart the optimizer by passing the previous solution as an initial guess!
         else:
             #mpc_res = mpc_solver(p=x_0, x0=opt_x_k, lbg=0, ubg=0, lbx = lb_opt_x, ubx = ub_opt_x)
+            start_time = datetime.now().timestamp()
             mpc_res = mpc_solver(p=vertcat(x_0, t_k[i:N+i]),x0=opt_x_k, lbg=lb_g, ubg=ub_g, lbx = lb_opt_x, ubx = ub_opt_x)
+            solve_times.append([datetime.now().timestamp() - start_time])
 
         
-        solve_times.append([datetime.now().timestamp() - start_time])
-        #extract cost
-        cost_k = mpc_res['f']
-        costs.append(cost_k)
+        #extract predicted total cost
+        #predicted_total_cost_k = mpc_res['f']
+        #predicted_total_costs.append(predicted_total_cost_k)
+        
 
         # Extract the control input
         opt_x_k = opt_x(mpc_res['x'])
         u_k = opt_x_k['u',0]
+        
+        # Extract prediction
+        #predictions.append(opt_x_k['x'])
 
         # simulate the system
         res_integrator = ode_solver(x0=x_0, p=vertcat(u_k, t_k[i]))
@@ -241,7 +252,15 @@ def Orthogonal_collocation_MPC(K=3, N=50, N_sim=200, dt=0.2, nx=3, nu=1, E0=5, v
         
         # Update the initial state
         x_0 = x_next
-        
+
+        #extract cost for stage
+        if i == 0:
+            cost_k = stage_cost_fcn(x_next, u_k, t_k[i+1], 0)
+        else:
+            cost_k = stage_cost_fcn(x_next, u_k, t_k[i+1], u_prev)
+        costs.append(cost_k)
+        u_prev = u_k
+
         # Store the results
         res_x_mpc.append(x_next)
         res_u_mpc.append(u_k)
